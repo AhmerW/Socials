@@ -1,0 +1,3 @@
+
+class ServiceContext:
+    pool = None

@@ -1,0 +1,2 @@
+class ServerContext:
+    pool = None
