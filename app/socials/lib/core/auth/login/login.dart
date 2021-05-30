@@ -39,23 +39,28 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
   }
 
   void attemptLogin() async {
-    AuthState authState = await AuthState.create(
-        username: inpUsername.getText(), password: inpPassword.getText());
-    if (authState.authenticated) {
-      GetIt.I.registerSingleton<AuthState>(authState);
+    final String username = inpUsername.getText();
+    final String password = inpPassword.getText();
 
-      Navigator.pushNamed(context, '/home/init',
-          arguments: HomeInitArguments(checkLocal: false));
-      errorMsgFail = false;
-    } else {
-      errorMsgFail = true;
-    }
-    setState(() {
-      if (errorMsg != null && errorMsg == authState.errorMsg) {
-        tries += 1;
+    if (username.isNotEmpty && password.isNotEmpty) {
+      AuthState authState =
+          await AuthState.create(username: username, password: password);
+      if (authState.authenticated) {
+        GetIt.I.registerSingleton<AuthState>(authState);
+
+        Navigator.pushNamed(context, '/home/init',
+            arguments: HomeInitArguments(checkLocal: false));
+        errorMsgFail = false;
+      } else {
+        errorMsgFail = true;
       }
-      errorMsg = authState.errorMsg;
-    });
+      setState(() {
+        if (errorMsg != null && errorMsg == authState.errorMsg) {
+          tries += 1;
+        }
+        errorMsg = authState.errorMsg;
+      });
+    }
   }
 
   @override

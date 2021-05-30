@@ -18,23 +18,34 @@ class AuthState {
 
   static Future<AuthState> create(
       {required String username, required String password}) async {
-    ServerResponse req =
-        await ServerRequest(serverUrl, '/auth/token', type: 'http').fetch(
-            RequestType.Post,
-            body: {'username': username, 'password': password});
+    ServerResponse req = await ServerRequest(
+      serverUrl,
+      '/auth/token',
+      type: 'http',
+    ).fetch(RequestType.Post,
+        body: {'username': username, 'password': password});
 
     if (req.data.containsKey('access_token')) {
       String token = req.data['access_token'];
-      ServerResponse details = await ServerRequest(serverUrl, '/user/profile',
-              type: 'http')
-          .fetch(RequestType.Get, headers: {'Authorization': 'bearer $token'});
+      ServerResponse details = await ServerRequest(
+        serverUrl,
+        '/user/profile',
+        type: 'http',
+      ).fetch(
+        RequestType.Get,
+        headers: {'Authorization': 'bearer $token'},
+      );
 
       return AuthState(
-          User(uid: details.data['uid'], username: details.data['username']),
-          token,
-          authenticated: true);
+        User(
+          uid: details.data['uid'],
+          username: details.data['username'],
+        ),
+        token,
+        authenticated: true,
+      );
     }
-
+    print(req.data);
     return AuthState(User(uid: 0, username: '0'), '0',
         authenticated: false, errorMsg: req.data['detail']);
   }

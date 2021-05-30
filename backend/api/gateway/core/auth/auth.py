@@ -61,10 +61,10 @@ class UserCreds(User):
 async def getByUsername(username: str, creds = False):
     """Gets username's details"""
     user = await db.runQuery(
-        ctx.pool, 
-        db.DBOP.FetchFirst, 
-        UserQ.BY_USERNAME,
-        username
+        username,
+        pool = ctx.pool, 
+        op = db.DBOP.FetchFirst, 
+        query = UserQ.BY_USERNAME
     )
     if not user:
         return None

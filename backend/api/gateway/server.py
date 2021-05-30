@@ -9,8 +9,9 @@ import asyncpg
 
 from gateway.resources.user import routes as user_routes
 from gateway.resources.message import routes as msg_routes
+from gateway.resources.account import routes as account_routes
 
-from common.mq_manager import MQManager
+from common.mq_manager import MQManager, MQManagerType, serializer
 from common.create_app import createPool
 from common import utils
 from common.response import Success, Responses
@@ -37,17 +38,18 @@ async def startup_event():
     )
     
     assert ctx.pool != None
-    print("sleeping")
-    await asyncio.sleep(5)
-    producer = AIOKafkaProducer(bootstrap_servers='localhost:9092')
-    # Get cluster layout and initial topic/partition leadership information
-    await producer.start()
-    try:
-        # Produce message
-        await producer.send_and_wait("events", b"Some message here")
-    finally:
-        # Wait for all pending messages to be delivered or expire.
-        await producer.stop()
+
+    ctx.producer = MQManager(
+        MQManagerType.Producer,
+        broker = utils.SERVICE_NC_AK_BROKER,
+        value_serializer = serializer
+    )
+
+    await ctx.producer.start()
+    
+@app.on_event('shutdown')
+async def shutdown_event():
+    await ctx.producer.stop()
 
 @app.get('/verify')
 async def verify(code: str, user: User = Depends(auth.getUser)):
@@ -57,7 +59,7 @@ async def verify(code: str, user: User = Depends(auth.getUser)):
     if uid != user.uid:
         raise Error(Errors.UNAUTHORIZED, status.HTTP_401_UNAUTHORIZED) 
     
-    return Success(Responses.CODE_VERIFIED)
+    return Success(Responses.CODE_VERIFIED, data = {'uid': user.uid})
 
 @app.get('/code')
 async def generateCode(user: User = Depends(auth.getUser)):
@@ -69,6 +71,7 @@ async def generateCode(user: User = Depends(auth.getUser)):
 
 app.include_router(user_routes.router, prefix='/user')
 app.include_router(msg_routes.router, prefix='/message')
+app.include_router(account_routes.router, prefix='/account')
 
 
 app.include_router(auth.router, prefix='/auth')

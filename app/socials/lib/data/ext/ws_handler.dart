@@ -32,11 +32,8 @@ class WsHandler {
     ).then((response) {
       if (response.code == 200 && response.data.containsKey('code')) {
         this.channel = IOWebSocketChannel.connect(
-          Uri.parse(url),
-          headers: {
-            'Authorization': authState.authToken(),
-            'Authentication-Code': response.data['code'],
-          },
+          Uri.parse('$url?code=${response.data["code"]}'),
+          headers: {'Authorization': authState.authToken()},
         );
       }
     });
