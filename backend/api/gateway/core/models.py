@@ -5,3 +5,4 @@ class User(BaseModel):
     uid: int
     username: str
     email: str
+    verified: Optional[bool] = False

@@ -13,7 +13,7 @@ from pydantic import BaseModel
 
 from gateway.ctx import ServerContext as ctx
 from gateway.core.models import User
-from common import db
+from common.data.local import db
 from common.queries import UserQ
 
 router = APIRouter()
@@ -77,6 +77,7 @@ async def authUser(username: str, password: str):
     user = await getByUsername(username, True)
     if not user:
         return False
+
     return False if not pwd_ctx.verify(
         password,
         user.password

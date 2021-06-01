@@ -63,7 +63,7 @@ async def verify(code: str, user: User = Depends(auth.getUser)):
 
 @app.get('/code')
 async def generateCode(user: User = Depends(auth.getUser)):
-    code:str = secrets.token_urlsafe(10)
+    code = secrets.token_urlsafe(10)
     ctx.codes[code] = user.uid
     return Success(Responses.CODE_GENERATED, {'code': code})
 

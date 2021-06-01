@@ -17,6 +17,9 @@ class Errors(Enum):
     CHANNEL_NOT_FOUND = auto()
     CHANNEL_EXISTS = auto()
     
+    USER_EMAIL_EXISTS = auto()
+    USER_USERNAME_EXISTS = auto()
+    
     
 class ErrorStatus(Enum):
     CHANNEL = 402
