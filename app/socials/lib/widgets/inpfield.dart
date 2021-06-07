@@ -7,9 +7,13 @@ class InpField extends StatelessWidget {
 
   final double widthPercentage;
   final bool isPassword;
+  final bool enableLabelText;
 
   InpField(
-      {this.hintText, this.widthPercentage = 0.7, this.isPassword = false});
+      {this.hintText,
+      this.widthPercentage = 0.7,
+      this.isPassword = false,
+      this.enableLabelText = true});
 
   String getText() {
     return textEditingController.text;
@@ -24,7 +28,10 @@ class InpField extends StatelessWidget {
           autocorrect: !isPassword,
           obscureText: isPassword,
           controller: textEditingController,
-          decoration: InputDecoration(hintText: hintText ?? ''),
+          decoration: InputDecoration(
+            hintText: hintText ?? '',
+            labelText: enableLabelText ? hintText ?? '' : '',
+          ),
         ));
   }
 }

@@ -47,23 +47,7 @@ class _AuthHomeState extends State<AuthHome> {
                   )),
               RelButton(text: 'Login', func: () {}),
               RelButton(text: 'Register', func: () {}),
-              ElevatedButton(
-                  onPressed: () {
-                    AuthState.create(username: 'test', password: 'pass')
-                        .then((value) {
-                      if (value.authenticated) {
-                        GetIt.I.registerSingleton<AuthState>(value);
-
-                        Navigator.pushNamed(context, '/home/init',
-                            arguments: HomeInitArguments(checkLocal: false));
-                      } else {
-                        setState(() {
-                          status = 'Error';
-                        });
-                      }
-                    });
-                  },
-                  child: Text('Continue'))
+              ElevatedButton(onPressed: () {}, child: Text('Continue'))
             ],
           ),
         ));

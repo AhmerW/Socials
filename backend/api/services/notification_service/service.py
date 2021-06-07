@@ -5,7 +5,7 @@ from fastapi import FastAPI, WebSocket, status, BackgroundTasks, WebSocketDiscon
 import aiohttp
 
 from common import utils
-from common.mq_manager import MQManager, MQManagerType, deserializer
+from common.data.ext.mq_manager import MQManager, MQManagerType, deserializer
 
 from services.notification_service.ctx import ServiceContext as ctx
 
@@ -105,14 +105,14 @@ async def onShutdown():
 
 
 @app.websocket('/ws')
-async def connectWs(websocket : WebSocket, code: str, device: str):
+async def connectWs(websocket : WebSocket, ott: str, device: str):
     global verification_session
     if verification_session is None:
         verification_session = aiohttp.ClientSession()
     status_ = status.WS_1008_POLICY_VIOLATION
     token = websocket.headers.get('Authorization')
     async with verification_session.get(
-            f'{utils.SERVER_URL}/verify?code={code}',
+            f'{utils.SERVER_URL}/ott/verify?ott={ott}',
             headers={'Authorization': f'bearer {token}'}
         ) as response:
         resp = await response.json()

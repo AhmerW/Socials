@@ -1,21 +1,24 @@
 from abc import ABC, abstractmethod
 from asyncpg import Connection
 
+from gateway.ctx import ServerContext as ctx
+from common.data.local import db
+
 class BaseInterface(ABC):
-    
+
     @abstractmethod
     async def delete(self):
         pass
     
     
-class Base():
+class BaseRepo():
     def __init__(self):
         self.con : Connection = None
         
     def __setattr__(self, name, value):
-        if name == 'con':
+        if name == 'con' and value is not None:
             if not isinstance(value, Connection):
-                raise RuntimeError('Connection attribute not of type <{0}>'.format(Connection))
+                raise RuntimeError('Connection of type <{0}> not permitted.'.format(Connection))
         
         return super.__setattr__(self, name, value)
     
@@ -25,7 +28,7 @@ class Base():
         return self
      
     async def __aexit__(self, *a, **kw):
-        self.close()
+        await self.close()
         
     async def close(self):
         await self.con.close()

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:socials/core/auth/auth_home.dart';
 import 'package:socials/core/auth/login/login.dart';
+import 'package:socials/core/auth/signup/confirmation_signup.dart';
+import 'package:socials/core/auth/signup/signup.dart';
 import 'package:socials/core/hinit.dart';
 
 import 'package:socials/core/home/home.dart';
@@ -10,17 +12,15 @@ import 'package:socials/data/local/secstorage.dart';
 import 'package:socials/data/states/auth_state.dart';
 import 'package:socials/models/user.dart';
 
-Future<AuthState> setup() async {
+Future<void> setup() async {
   SecureStorage secureStorage = SecureStorage();
-  GetIt.I.registerSingleton<SecureStorage>(secureStorage);
   GetIt.I.allowReassignment = true;
-
-  return await AuthState.create(username: 'test', password: 'test');
+  GetIt.I.registerSingleton<SecureStorage>(secureStorage);
+  GetIt.I.registerSingleton<AuthState>(AuthState.empty());
 }
 
 void main() {
   setup().then((value) {
-    GetIt.I.registerSingleton<AuthState>(value);
     runApp(SocialsApp());
   });
 }
@@ -35,7 +35,7 @@ class SocialsApp extends StatelessWidget {
       // Light theme data
       theme: ThemeData(
           textTheme: TextTheme(bodyText1: TextStyle(color: Colors.black)),
-          primarySwatch: Colors.grey,
+          primarySwatch: Colors.blue,
           primaryColor: Colors.white,
           brightness: Brightness.light,
           dividerColor: Colors.black12,
@@ -63,12 +63,14 @@ class SocialsApp extends StatelessWidget {
               foregroundColor: Colors.white,
               backgroundColor: AppColors.colorDarker)),
       // Current theme
-      themeMode: ThemeMode.dark,
+      themeMode: ThemeMode.light,
       routes: {
         '/home': (context) => AppHome(),
         HomeInit.routeName: (context) => HomeInit(),
         '/auth/home': (context) => AuthHome(),
-        '/auth/login': (context) => AuthLoginScreen()
+        '/auth/login': (context) => AuthLoginScreen(),
+        '/auth/signup': (context) => AuthSignupScreen(),
+        '/auth/confirmation': (context) => AuthSignupConfirmation()
       },
     );
   }

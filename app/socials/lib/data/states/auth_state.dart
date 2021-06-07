@@ -3,6 +3,13 @@ import 'package:socials/data/ext/network.dart';
 import 'package:socials/data/ext/response.dart';
 import 'package:socials/models/user.dart';
 
+class AuthStateResponse {
+  final bool ok;
+  final AuthState? authState;
+  final String? text;
+  AuthStateResponse({required this.ok, required this.authState, this.text});
+}
+
 class AuthState {
   final User user;
   final String token;
@@ -16,15 +23,52 @@ class AuthState {
     return 'bearer $token';
   }
 
-  static Future<AuthState> create(
-      {required String username, required String password}) async {
+  factory AuthState.empty() {
+    return AuthState(User(uid: 0, username: '0'), '', authenticated: false);
+  }
+
+  static Future<AuthStateResponse> fromNew({
+    required String username,
+    required String password,
+    required String? email,
+  }) async {
+    ServerResponse req = await ServerRequest(
+      serverUrl,
+      '/account/new',
+      type: 'http',
+    ).fetch(
+      RequestType.Post,
+      encodeBody: true,
+      body: {
+        'username': username,
+        'password': password,
+        'email': email,
+      },
+    );
+    late String? text;
+
+    text = req.detail;
+    return AuthStateResponse(
+      ok: req.ok,
+      authState: null,
+      text: text,
+    );
+  }
+
+  static Future<AuthStateResponse> create({
+    required String username,
+    required String password,
+  }) async {
     ServerResponse req = await ServerRequest(
       serverUrl,
       '/auth/token',
       type: 'http',
-    ).fetch(RequestType.Post,
-        body: {'username': username, 'password': password});
-
+    ).fetch(
+      RequestType.Post,
+      encodeBody: false,
+      body: {'username': username, 'password': password},
+    );
+    print(req.data);
     if (req.data.containsKey('access_token')) {
       String token = req.data['access_token'];
       ServerResponse details = await ServerRequest(
@@ -36,17 +80,17 @@ class AuthState {
         headers: {'Authorization': 'bearer $token'},
       );
 
-      return AuthState(
-        User(
-          uid: details.data['uid'],
-          username: details.data['username'],
-        ),
-        token,
-        authenticated: true,
-      );
+      return AuthStateResponse(
+          ok: true,
+          authState: AuthState(
+            User(
+              uid: details.data['uid'],
+              username: details.data['username'],
+            ),
+            token,
+            authenticated: true,
+          ));
     }
-    print(req.data);
-    return AuthState(User(uid: 0, username: '0'), '0',
-        authenticated: false, errorMsg: req.data['detail']);
+    return AuthStateResponse(ok: false, authState: null, text: req.detail);
   }
 }

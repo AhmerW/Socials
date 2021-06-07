@@ -24,15 +24,15 @@ class WsHandler {
   }) {
     ServerRequest(
       serverUrl,
-      '/code',
+      '/ott/get',
       type: 'http',
     ).fetch(
       RequestType.Get,
       headers: {'Authorization': authState.authToken()},
     ).then((response) {
-      if (response.code == 200 && response.data.containsKey('code')) {
+      if (response.code == 200 && response.data.containsKey('ott')) {
         this.channel = IOWebSocketChannel.connect(
-          Uri.parse('$url?code=${response.data["code"]}'),
+          Uri.parse('$url?ott=${response.data["ott"]}'),
           headers: {'Authorization': authState.authToken()},
         );
       }

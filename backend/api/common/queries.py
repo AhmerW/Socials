@@ -18,14 +18,14 @@ class Query():
 		"""Extracts each keyword argument from the query"""
 		ci = None
 		cw = None
-		kwargs = []
-		for i, kw in enumerate(query):
+		kwargs = list()
+		for i, kw in enumerate(self._q):
 			if ci is not None and cw is not None:
-				if i+1 == len(query):
+				if i+1 == len(self._q):
 					# end
-					kwargs.append(query[ci:i+1])
-				elif not query[i].strip():
-					kwargs.append(query[ci:i])
+					kwargs.append(self._q[ci:i+1])
+				elif not self._q[i].strip() or self._q[i] in (',', ')', '('):
+					kwargs.append(self._q[ci:i])
 					ci, cw = None, None
 			if kw.startswith(self._fc):
 				ci, cw = i, kw
@@ -61,23 +61,32 @@ class Query():
 				c += 1
 			query = query.replace(kw, f'{self._fc}{c}')
  		
-		return (query, tuple(values))
+		return (query, *values)
 
 
-class UserQ:
-    BY_USERNAME = "SELECT * FROM users WHERE username=$1"
-    BY_EMAIL = "SELECT email FROM users WHERE email=$1"
-    BY_EMAIL_OR_USERNAME = "SELECT email, username FROM users WHERE email = $1 OR username = $2"
+class _QueryCreator(type):
+    def __getattribute__(self, name) -> Query:
+        return Query(
+            object.__getattribute__(self, name),
+            format_chr = '$'
+        )
+
+
+class UserQ(metaclass = _QueryCreator):
+    FROM_USERNAME = "SELECT * FROM users WHERE username=$username"
+    FROM_EMAIL = "SELECT email FROM users WHERE email=$email"
+    FROM_USERNAME_OR_EMAIL = "SELECT email, username FROM users WHERE email = $email OR username = $username"
     
-class AccountQ:
+class AccountQ(metaclass = _QueryCreator):
+
     NEW = """
         WITH ins1 AS (
-        INSERT INTO users(username, email, password)
-        VALUES($1, $2, $3) 
+        INSERT INTO users(username, email, password, verified)
+        VALUES($username, $email, $password, $verified) 
         RETURNING *
     ), ins2 AS (
-            INSERT INTO user_profiles(uid, display_name, color)
-            VALUES((select uid from ins1), $4, $5)
+            INSERT INTO user_profiles(uid, display_name)
+            VALUES((select uid from ins1), $display_name)
             RETURNING *
         )
     SELECT ins1.username, ins1.uid

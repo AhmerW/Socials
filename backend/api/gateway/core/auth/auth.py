@@ -7,14 +7,15 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
 from jose import jwt, JWTError
-from passlib.context import CryptContext
 
 from pydantic import BaseModel
 
 from gateway.ctx import ServerContext as ctx
 from gateway.core.models import User
+from common.response import Success, Responses
+from common.errors import Error, Errors
 from common.data.local import db
-from common.queries import UserQ
+from common.queries import Query, UserQ
 
 router = APIRouter()
 load_dotenv('.env')
@@ -25,14 +26,17 @@ TOKEN_EXPIRE = int(os.getenv('SERVER_AUTH_EXPIRE')) #
 
 
 
-
-pwd_ctx = CryptContext(
-    schemes=['bcrypt'],
-    deprecated='auto'
-)
+pwd_ctx = ctx.pwd_ctx
 
 oauth2_scheme = OAuth2PasswordBearer(
     tokenUrl = '/token'
+)
+
+credentials_exception =  Error(
+    Errors.UNAUTHORIZED,
+    detail = 'Could not validate credentials',
+    status = status.HTTP_401_UNAUTHORIZED,
+    headers = {"WWW-Authenticate": "Bearer"}
 )
 
 class Token(BaseModel):
@@ -61,10 +65,9 @@ class UserCreds(User):
 async def getByUsername(username: str, creds = False):
     """Gets username's details"""
     user = await db.runQuery(
-        username,
         pool = ctx.pool, 
         op = db.DBOP.FetchFirst, 
-        query = UserQ.BY_USERNAME
+        query = UserQ.FROM_USERNAME.format(username=username)
     )
     if not user:
         return None
@@ -87,11 +90,7 @@ async def authUser(username: str, password: str):
 
 async def getUser(token: str = Depends(oauth2_scheme)):
     """Takes a token and returns a User object from it (if valid)."""
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
@@ -110,18 +109,20 @@ async def getUser(token: str = Depends(oauth2_scheme)):
 
 
 
-@router.post('/token', response_model=Token)
+@router.post('/token')
 async def authToken(form: OAuth2PasswordRequestForm = Depends()):
     """/auth/token endpoint. Creates a jwt token for the user if credentials are correct"""
     user = await authUser(form.username, form.password)
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        raise credentials_exception
     access_token = Token.create(
         data={"sub": user.username},
         expires_delta=timedelta(minutes=TOKEN_EXPIRE)
     )
-    return {"access_token": access_token.access_token, "token_type": access_token.token_type, "ok": True}
+    return Success(
+        'Success',
+        {
+            "access_token": access_token.access_token, 
+            "token_type": access_token.token_type
+        }
+    )

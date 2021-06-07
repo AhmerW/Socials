@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Socials</title>
+
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+
+    <style>
+        h1 {
+            text-align: center;        
+            color:  rgb(0, 153, 255);
+        }
+
+        input[type=text], input[type=password] {
+            width: 50%;
+            padding: 12px 20px;
+            margin: 8px 0;
+            display: inline-block;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+          }
+
+        button {
+            background-color: rgb(0, 153, 255);;
+            color: white;
+            padding: 14px 20px;
+            margin: 8px 0;
+            border: none;
+            cursor: pointer;
+            width: 25%;
+        }
+
+        button:hover {
+            opacity: 0.8;
+        }
+
+        .container {
+            padding-top: 1%;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Socials</h1>
+    <h3 style="color: gray; text-align: center">Verify email address</h3>
+    <hr style="width: 50%;">
+
+    <form id="loginForm" action="">
+        <div class="container">
+            <input type="text" placeholder="Username" name="username" required>
+            <input type="password" placeholder="Password" name="password" required>
+            <br>
+            <h3 id='responsetext'></h3>
+            <br>
+            <button type="submit">Login</button>
+        </div>
+    </form>
+</body>
+
+<script>
+    clgin = false;
+    
+    $(document).ready(function() {
+        $(document).on('submit', '#loginForm', function() {
+            if(clgin){
+                return false;
+            }
+            clgin = !clgin;
+        let fd = new FormData();
+        var data = $('form').serializeArray();
+        let username = data[0]['value']
+        let password = data[1]['value']
+
+        var http = new XMLHttpRequest();
+        var url = '/token';
+        var params = `username=${username}&password=${password}`;
+        http.open('POST', url, true);
+        
+        //Send the proper header information along with the request
+        http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+        
+        http.onreadystatechange = function() {//Call a function when the state changes.
+            if (http.readyState == XMLHttpRequest.DONE) {
+                clgin = false;
+                var obj = document.getElementById('responsetext');
+                var response = JSON.parse(http.responseText)
+                if(!response['data'].hasOwnProperty('access_token')){
+                    obj.innerHTML = 'Invalid credentials!'
+                    obj.style = 'color: red';
+                } else {
+                    var token = response['data']['access_token'];
+                    var url = new URL(window.location.href);
+                    var _urlToken = url.searchParams.get("token");
+
+                    let tokendata = {token: _urlToken};
+
+                    fetch("/register/verified", {
+                      method: "POST", 
+                      headers: {
+                          'Authorization': `Bearer ${token}`
+                        },
+                      body: JSON.stringify(tokendata)
+                    }).then(responsedata => {
+                        responsedata.json().then(
+                            res => {
+                                if(!res['verified']){
+                                    obj.innerHTML = 'Confirmation link has expired!'
+                                    obj.style = 'color: red'
+                                    clgin = false;
+                                } else {
+                                    obj.innerHTML = 'Your email is verified. You can return to the app.'
+                                    obj.style = 'color: green'
+                                    clgin = true;
+                                }
+                            }
+                        )
+    
+
+                    });
+
+                }
+            }
+        }
+        http.send(params);
+
+        return false;
+        });
+    });
+</script>
+</html>

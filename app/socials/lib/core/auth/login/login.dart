@@ -43,23 +43,24 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
     final String password = inpPassword.getText();
 
     if (username.isNotEmpty && password.isNotEmpty) {
-      AuthState authState =
+      AuthStateResponse authStateResponse =
           await AuthState.create(username: username, password: password);
-      if (authState.authenticated) {
-        GetIt.I.registerSingleton<AuthState>(authState);
 
-        Navigator.pushNamed(context, '/home/init',
-            arguments: HomeInitArguments(checkLocal: false));
-        errorMsgFail = false;
-      } else {
-        errorMsgFail = true;
-      }
-      setState(() {
-        if (errorMsg != null && errorMsg == authState.errorMsg) {
-          tries += 1;
+      if (authStateResponse.ok) {
+        final AuthState authState = authStateResponse.authState as AuthState;
+
+        if (authState.authenticated) {
+          GetIt.I.registerSingleton<AuthState>(authState);
+
+          Navigator.pushNamed(context, '/home/init',
+              arguments: HomeInitArguments(checkLocal: false));
         }
-        errorMsg = authState.errorMsg;
-      });
+      } else {
+        setState(() {
+          errorMsgFail = true;
+          errorMsg = authStateResponse.text;
+        });
+      }
     }
   }
 
@@ -88,7 +89,7 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
             errorMsg != null
                 ? Container(
                     child: Text(
-                    '[$tries] ${errorMsg as String}',
+                    errorMsg as String,
                     style: TextStyle(
                         color: errorMsgFail ? Colors.red : Colors.green),
                   ))
@@ -108,7 +109,10 @@ class _AuthLoginScreenState extends State<AuthLoginScreen> {
             Container(
               padding: EdgeInsets.only(top: 20),
               child: TextButton(
-                  onPressed: () {}, child: Text('No account? Register')),
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/auth/signup');
+                  },
+                  child: Text('No account? Register')),
             )
           ],
         ));

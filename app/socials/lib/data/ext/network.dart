@@ -14,17 +14,29 @@ class ServerRequest {
         : Uri.http(urlstring, path);
   }
 
-  Future<ServerResponse> fetch(RequestType type,
-      {Map<String, String>? headers, Map<String, dynamic>? body}) async {
+  Future<ServerResponse> fetch(
+    RequestType type, {
+    Map<String, String>? headers,
+    Map<String, dynamic>? body,
+    bool encodeBody = true,
+  }) async {
     var resp;
     if (type == RequestType.Post) {
-      resp = await http.post(url, headers: headers, body: body);
+      resp = await http.post(
+        url,
+        headers: headers,
+        body: encodeBody ? jsonEncode(body) : body,
+      );
     } else if (type == RequestType.Get) {
-      resp = await http.get(url, headers: headers);
+      resp = await http.get(
+        url,
+        headers: headers,
+      );
     }
     return ServerResponse(
-        headers: resp.headers,
-        code: resp.statusCode,
-        data: jsonDecode(resp.body));
+      headers: resp.headers,
+      code: resp.statusCode,
+      raw: jsonDecode(resp.body),
+    );
   }
 }

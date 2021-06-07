@@ -20,13 +20,7 @@ class HomeInit extends StatefulWidget {
 
 class _HomeInitState extends State<HomeInit> {
   Future<void> checkStorage() async {
-    print('checking storage');
-
     SecureStorage secureStorage = GetIt.I.get<SecureStorage>();
-    AuthState.create(
-            username: await secureStorage.read(key: 'username') as String,
-            password: await secureStorage.read(key: 'password') as String)
-        .then((value) => GetIt.I.registerSingleton<AuthState>(value));
   }
 
   @override
