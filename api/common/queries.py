@@ -1,83 +1,93 @@
 class Query():
-	def __init__(self, query, format_chr = '$'):
-		self._q = query
-		self._fc = format_chr
+    """
+    Allows use to write queries with $placeholder syntax instead of using $(some number),
+    and then passing the keyword argument for that placeholder when calling the class. (__call__ // format())
+    The query then gets converted into number-like syntax instead of placeholders, in order to be compatible
+    with the postgres engines.
+    """
 
-	@property
-	def query(self):
-		return self._q
+    def __init__(self, query, format_chr='$'):
+        self._q = query
+        self._fc = format_chr
 
-	def __repr__(self):
-		return self._q
+    @property
+    def query(self):
+        return self._q
 
-	def __call__(self, **kwargs):
-		return self.format(**kwargs)
-		
+    def __repr__(self):
+        return self._q
 
-	def _getKwargs(self):
-		"""Extracts each keyword argument from the query"""
-		ci = None
-		cw = None
-		kwargs = list()
-		for i, kw in enumerate(self._q):
-			if ci is not None and cw is not None:
-				if i+1 == len(self._q):
-					# end
-					kwargs.append(self._q[ci:i+1])
-				elif not self._q[i].strip() or self._q[i] in (',', ')', '('):
-					kwargs.append(self._q[ci:i])
-					ci, cw = None, None
-			if kw.startswith(self._fc):
-				ci, cw = i, kw
+    def __call__(self, **kwargs):
+        return self.format(**kwargs)
 
-		return kwargs
+    def _getKwargs(self):
+        """Extracts each keyword argument from the query"""
+        ci = None
+        cw = None
+        kwargs = list()
+        for i, kw in enumerate(self._q):
+            if ci is not None and cw is not None:
+                if i+1 == len(self._q):
+                    # end
+                    kwargs.append(self._q[ci:i+1])
+                elif not self._q[i].strip() or self._q[i] in (',', ')', '('):
+                    kwargs.append(self._q[ci:i])
+                    ci, cw = None, None
+            if kw.startswith(self._fc):
+                ci, cw = i, kw
 
-	def format(self, **kwargs):
-		"""
-		**kwargs
-			- List of keyword arguments to apply to the query
+        return kwargs
 
-		returns:
-			(str, tuple)
-			which represents the query and the values applied to each kwarg.
+    def format(self, **kwargs):
+        """
+        **kwargs
+                - List of keyword arguments to apply to the query
 
-		"""
+        returns:
+                (str, tuple)
+                which represents the query and the values applied to each kwarg.
 
-		kwargs_extracted =  self._getKwargs()
-		kwargs_no_fc = [kw[1::] for kw in kwargs_extracted]
+        """
 
-		kwargs_sorted = sorted(kwargs, key = kwargs_no_fc.index)
-		values = [kwargs.get(k) for k in kwargs_sorted]
+        kwargs_extracted = self._getKwargs()
+        kwargs_no_fc = [kw[1::] for kw in kwargs_extracted]
 
-		query = self._q
-		used = list()
-		c  = 0
+        kwargs_sorted = sorted(kwargs, key=kwargs_no_fc.index)
+        values = [kwargs.get(k) for k in kwargs_sorted]
 
-		# Replace each keyword argument with an appropiate index number
-		for i, kw in enumerate(kwargs_extracted):
-			kwe = kw[1::]
-			if not kwe in used:
-				used.append(kwe)
-				c += 1
-			query = query.replace(kw, f'{self._fc}{c}')
- 		
-		return (query, *values)
+        query = self._q
+        used = list()
+        c = 0
+
+        # Replace each keyword argument with an appropiate index number
+        for i, kw in enumerate(kwargs_extracted):
+            kwe = kw[1::]
+            if not kwe in used:
+                used.append(kwe)
+                c += 1
+            query = query.replace(kw, f'{self._fc}{c}')
+
+        return (query, *values)
 
 
 class _QueryCreator(type):
+    """Query(attr) when an attribute is referenced"""
+
     def __getattribute__(self, name) -> Query:
         return Query(
             object.__getattribute__(self, name),
-            format_chr = '$'
+            format_chr='$'
         )
 
 
-class UserQ(metaclass = _QueryCreator):
+class UserQ(metaclass=_QueryCreator):
     FROM_USERNAME = "SELECT * FROM users WHERE username=$username"
     FROM_EMAIL = "SELECT email FROM users WHERE email=$email"
     FROM_USERNAME_OR_EMAIL = "SELECT email, username FROM users WHERE email = $email OR username = $username"
-    
-class AccountQ(metaclass = _QueryCreator):
+    VERIFY = "UPDATE users SET verified=TRUE where uid=$uid"
+
+
+class AccountQ(metaclass=_QueryCreator):
 
     NEW = """
         WITH ins1 AS (

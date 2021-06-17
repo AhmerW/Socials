@@ -7,3 +7,6 @@ class User(BaseModel):
     email: Optional[str] = None
     verified: Optional[bool] = False
     premium: Optional[bool] = False
+
+class TokenModel(BaseModel):
+    token: str

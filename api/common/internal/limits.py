@@ -1,0 +1,2 @@
+MAX_USERNAME_LEN = 20
+INTERNAL_USERNAME_PREFIX = 'internal_test_user'

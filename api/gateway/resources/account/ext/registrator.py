@@ -45,15 +45,3 @@ class Registrator():
             return False 
         return email
         
-    # send email to account
-    async def sendEmail(self, email, html):
-        token = self.generate(email)
-        message = MessageSchema(
-            subject = "Socials - Confirmation link",
-            recipients = [email],
-            body = html,
-            subtype = 'html'
-        )
-        fm = FastMail(REGISTER_CONF)
-        await fm.send_message(message)
-    

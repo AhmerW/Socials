@@ -7,6 +7,7 @@ print(os.getcwd())
 
 class HTML:
     REGISTRATION_PENDING = None
+    REGISTRATION_PENDING_EMAIL = None
     REGISTRATION_EXISTING = None
 
 
