@@ -5,37 +5,31 @@ from common.internal.limits import INTERNAL_USERNAME_PREFIX, MAX_USERNAME_LEN
 
 from common.queries import UserQ
 from common.data.local.html import HTML
-from gateway.ctx import ServerContext as ctx
-from gateway.resources.account.ext.registrator import Registrator
-
-
-registrator = Registrator()
+from gateway import ctx
+from gateway.resources.account.ext import registrator
 
 
 def registrationAllowUsername(username: str) -> bool:
     if len(username) > MAX_USERNAME_LEN:
         return False
-    return not username.startswith(INTERNAL_USERNAME_PREFIX)
+    if not username.strip():
+        return False
+
+    return True
 
 
 def registrationVerify(token: str, email: str) -> bool:
-    return registrator.confirm(token) == email
+    return registrator.confirmEmailToken(token) == email
 
 
-class RegistrationProcType(Enum):
-    PENDING = 0,  # Registration not done, must verify email
-    EXISTING = 1  # Registration account already existing
+async def initVerification(email: str):
+    """Generates and sends verification-email to target-mail"""
+    token = registrator.generateEmailToken(email)
+    html = HTML.REGISTRATION_PENDING_EMAIL.format(
+        f'{ctx.ACCOUNT_VERIFY_URL}?token={token}')
 
-
-async def registrationProc(email: str, rpt: RegistrationProcType):
-    if rpt == RegistrationProcType.PENDING:
-        token = registrator.generate(email)
-        html = HTML.REGISTRATION_PENDING_EMAIL.format(token)
-
-    elif rpt == RegistrationProcType.EXISTING:
-        html = HTML.REGISTRATION_EXISTING
-
-    await ctx.email_service.sendMail(
+    print('sending')
+    return await ctx.email_service.sendMail(
         body=html,
         target=email,
         subject='Account notification'

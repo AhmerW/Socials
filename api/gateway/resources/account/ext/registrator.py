@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 from itsdangerous import URLSafeTimedSerializer
 
-from fastapi_mail import MessageSchema, FastMail, ConnectionConfig
+from fastapi_mail import ConnectionConfig
 
 
 load_dotenv()
@@ -19,29 +19,32 @@ REGISTER_CONF = ConnectionConfig(
     MAIL_SSL=False
 )
 
-class Registrator():
-    def __init__(self):
-        # email : details
-        self._tokens = {}
-        self._skey = os.getenv('MAIL_SKEY'),
-        self._spass = os.getenv('SERVER_AUTH_SKEY')
-        
 
-        
-    def generate(self, email):
-        return URLSafeTimedSerializer(self._skey).dumps(
-            email,
-            salt = self._spass
+_tokens = {}
+_skey = os.getenv('MAIL_SKEY'),
+_spass = os.getenv('SERVER_AUTH_SKEY')
+if isinstance(_skey, tuple) and len(_skey) >= 1:
+    _skey = _skey[0]
+
+
+def existsEmailToken(token) -> bool:
+    return not (_tokens.get(token) is None)
+
+
+def generateEmailToken(email):
+    return URLSafeTimedSerializer(_skey).dumps(
+        email,
+        salt=_spass
+    )
+
+
+def confirmEmailToken(token, expire=900):
+    try:
+        email = URLSafeTimedSerializer(_skey).loads(
+            token,
+            salt=_spass,
+            max_age=expire
         )
-        
-    async def confirm(self, token, expire=900):
-        try:
-            email = URLSafeTimedSerializer(self._skey).loads(
-                token,
-                salt=self._spass,
-                max_age=expire
-            )
-        except:
-            return False 
-        return email
-        
+    except:
+        return False
+    return email

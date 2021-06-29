@@ -2,8 +2,7 @@ from typing import List, Any
 import secrets
 from pydantic import BaseModel
 
-from gateway.ctx import ServerContext as ctx
-
+from gateway import ctx
 
 
 class OTToken(object):
@@ -18,15 +17,14 @@ class OTToken(object):
     """
 
     @classmethod
-    def generate(cls, add = False, uid = None) -> str:
+    def generate(cls, add=False, uid=None) -> str:
         """Generates a one-time use Token"""
-        token =  secrets.token_urlsafe(cls.TOKEN_BYTES)
+        token = secrets.token_urlsafe(cls.TOKEN_BYTES)
         if add and uid is not None:
             cls.dict_otts[token] = uid
         return token
-    
+
     @classmethod
-    async def verify(cls, uid: int, token: str, remove = True):
+    async def verify(cls, uid: int, token: str, remove=True):
 
         raise NotImplementedError()
-        

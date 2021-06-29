@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
@@ -11,21 +12,23 @@
 
     <style>
         h1 {
-            text-align: center;        
-            color:  rgb(0, 153, 255);
+            text-align: center;
+            color: rgb(0, 153, 255);
         }
 
-        input[type=text], input[type=password] {
+        input[type=text],
+        input[type=password] {
             width: 50%;
             padding: 12px 20px;
             margin: 8px 0;
             display: inline-block;
             border: 1px solid #ccc;
             box-sizing: border-box;
-          }
+        }
 
         button {
-            background-color: rgb(0, 153, 255);;
+            background-color: rgb(0, 153, 255);
+            ;
             color: white;
             padding: 14px 20px;
             margin: 8px 0;
@@ -44,6 +47,7 @@
         }
     </style>
 </head>
+
 <body>
     <h1>Socials</h1>
     <h3 style="color: gray; text-align: center">Verify email address</h3>
@@ -63,72 +67,74 @@
 
 <script>
     clgin = false;
-    
-    $(document).ready(function() {
-        $(document).on('submit', '#loginForm', function() {
-            if(clgin){
+
+    $(document).ready(function () {
+        $(document).on('submit', '#loginForm', function () {
+            if (clgin) {
                 return false;
             }
             clgin = !clgin;
-        let fd = new FormData();
-        var data = $('form').serializeArray();
-        let username = data[0]['value']
-        let password = data[1]['value']
+            let fd = new FormData();
+            var data = $('form').serializeArray();
+            let username = data[0]['value']
+            let password = data[1]['value']
 
-        var http = new XMLHttpRequest();
-        var url = '/token';
-        var params = `username=${username}&password=${password}`;
-        http.open('POST', url, true);
-        
-        //Send the proper header information along with the request
-        http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
-        
-        http.onreadystatechange = function() {//Call a function when the state changes.
-            if (http.readyState == XMLHttpRequest.DONE) {
-                clgin = false;
-                var obj = document.getElementById('responsetext');
-                var response = JSON.parse(http.responseText)
-                if(!response['data'].hasOwnProperty('access_token')){
-                    obj.innerHTML = 'Invalid credentials!'
-                    obj.style = 'color: red';
-                } else {
-                    var token = response['data']['access_token'];
-                    var url = new URL(window.location.href);
-                    var _urlToken = url.searchParams.get("token");
+            var http = new XMLHttpRequest();
+            var url = '/auth/token';
+            var params = `username=${username}&password=${password}`;
+            http.open('POST', url, true);
 
-                    let tokendata = {token: _urlToken};
+            //Send the proper header information along with the request
+            http.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
 
-                    fetch("/account/verify", {
-                      method: "POST", 
-                      headers: {
-                          'Authorization': `Bearer ${token}`
-                        },
-                      body: JSON.stringify(tokendata)
-                    }).then(responsedata => {
-                        responsedata.json().then(
-                            res => {
-                                if(!res['verified']){
-                                    obj.innerHTML = 'Confirmation link has expired!'
-                                    obj.style = 'color: red'
-                                    clgin = false;
-                                } else {
-                                    obj.innerHTML = 'Your email is verified. You can return to the app.'
-                                    obj.style = 'color: green'
-                                    clgin = true;
+            http.onreadystatechange = function () {//Call a function when the state changes.
+                if (http.readyState == XMLHttpRequest.DONE) {
+                    clgin = false;
+                    var obj = document.getElementById('responsetext');
+                    var response = JSON.parse(http.responseText)
+                    if (!response['data'].hasOwnProperty('access_token')) {
+                        obj.innerHTML = 'Invalid credentials!'
+                        obj.style = 'color: red';
+                    } else {
+                        var token = response['data']['access_token'];
+                        var url = new URL(window.location.href);
+                        var _urlToken = url.searchParams.get("token");
+
+                        let tokendata = { token: _urlToken };
+
+                        fetch("/account/verify-attempt", {
+                            method: "POST",
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-type': 'application/json'
+                            },
+                            body: JSON.stringify(tokendata)
+                        }).then(responsedata => {
+
+                            responsedata.json().then(
+                                res => {
+                                    obj.innerHTML = res['detail']
+                                    if (!res['ok']) {
+                                        obj.style = 'color: red'
+                                        clgin = false;
+                                    } else {
+                                        obj.style = 'color: green'
+                                        clgin = true;
+                                    }
                                 }
-                            }
-                        )
-    
+                            )
 
-                    });
 
+                        });
+
+                    }
                 }
             }
-        }
-        http.send(params);
+            http.send(params);
 
-        return false;
+            return false;
         });
     });
 </script>
+
 </html>

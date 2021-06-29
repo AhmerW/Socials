@@ -1,9 +1,10 @@
 from fastapi_mail import ConnectionConfig
 
-import os 
+import os
 from dotenv import load_dotenv
 
 load_dotenv()
+
 
 DEFAULT_CONF = ConnectionConfig(
     MAIL_USERNAME='socials.site',
@@ -15,5 +16,3 @@ DEFAULT_CONF = ConnectionConfig(
     MAIL_TLS=True,
     MAIL_SSL=False
 )
-
-

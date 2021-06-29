@@ -30,7 +30,13 @@ class Query():
                 if i+1 == len(self._q):
                     # end
                     kwargs.append(self._q[ci:i+1])
-                elif not self._q[i].strip() or self._q[i] in (',', ')', '('):
+                elif not self._q[i].strip() or self._q[i] in (
+                    # EOLs
+                    ',',
+                    ';',
+                    ')',
+                    '(',
+                ):
                     kwargs.append(self._q[ci:i])
                     ci, cw = None, None
             if kw.startswith(self._fc):
@@ -53,14 +59,18 @@ class Query():
         kwargs_no_fc = [kw[1::] for kw in kwargs_extracted]
 
         kwargs_sorted = sorted(kwargs, key=kwargs_no_fc.index)
-        values = [kwargs.get(k) for k in kwargs_sorted]
+        values = [
+            kwargs.get(k)
+            for k in
+            kwargs_sorted
+        ]
 
         query = self._q
         used = list()
         c = 0
 
         # Replace each keyword argument with an appropiate index number
-        for i, kw in enumerate(kwargs_extracted):
+        for kw in kwargs_extracted:
             kwe = kw[1::]
             if not kwe in used:
                 used.append(kwe)
@@ -81,24 +91,144 @@ class _QueryCreator(type):
 
 
 class UserQ(metaclass=_QueryCreator):
-    FROM_USERNAME = "SELECT * FROM users WHERE username=$username"
-    FROM_EMAIL = "SELECT email FROM users WHERE email=$email"
-    FROM_USERNAME_OR_EMAIL = "SELECT email, username FROM users WHERE email = $email OR username = $username"
+    FROM_USERNAME = "SELECT * FROM public.users WHERE username=$username"
+    FROM_EMAIL = "SELECT email FROM public.users WHERE email=$email"
+    FROM_USERNAME_OR_EMAIL = "SELECT email, username FROM public.users WHERE email = $email OR username = $username"
+
     VERIFY = "UPDATE users SET verified=TRUE where uid=$uid"
+
+    PROFILE = """
+    SELECT * from public.users
+    JOIN public.user_profiles 
+    ON public.users.uid = public.user_profiles.uid;
+    """
+
+    TOTAL_CHATS = """
+    SELECT COUNT(*) from chat.chat_members where chat.chat_members.chat_member_uid = $uid
+    """
+
+# Large queries have beeen formatted using online sql-query formatters
 
 
 class AccountQ(metaclass=_QueryCreator):
 
     NEW = """
-        WITH ins1 AS (
-        INSERT INTO users(username, email, password, verified)
-        VALUES($username, $email, $password, $verified) 
-        RETURNING *
-    ), ins2 AS (
-            INSERT INTO user_profiles(uid, display_name)
-            VALUES((select uid from ins1), $display_name)
-            RETURNING *
-        )
-    SELECT ins1.username, ins1.uid
-    from ins1 join ins2 on ins1.uid = ins2.uid;
+        WITH ins1 AS
+        (
+                    insert INTO users
+                                (
+                                            username,
+                                            email,
+                                            password,
+                                            verified
+                                )
+                                VALUES
+                                (
+                                            $username,
+                                            $email,
+                                            $password,
+                                            $verified
+                                )
+                    returning   * ), ins2 AS
+        (
+                    INSERT INTO user_profiles
+                                (
+                                            UID,
+                                            display_name
+                                )
+                                VALUES
+                                (
+                                (
+                                    SELECT UID
+                                    FROM   ins1
+                                )
+                                ,
+                                $display_name
+                                )
+                    returning   * )
+        SELECT ins1.username,
+            ins1.UID
+        FROM   ins1
+        join   ins2
+        ON     ins1.UID = ins2.UID; 
+    """
+
+
+class ChatQ(metaclass=_QueryCreator):
+
+    # Get all chats of an user, including the chat's members as List<int>
+    # Chat's profile picture is the member's profile picture
+    # if the amount of members = 1 (2 people conversation, not a group-chat)
+    GET_ALL_CHATS = """
+        WITH chats AS
+        (
+            SELECT chat.chat_id,
+                    chat.chat_name,
+                    chat.chat_pfp
+            FROM   chat.chat_members AS members
+            join   chat.chats        AS chat
+            ON     chat.chat_id = members.chat_id
+            WHERE  members.chat_member_uid = $uid ), chat_members AS
+        (
+                SELECT   chats.chat_id,
+                        chats.chat_name,
+                        chats.chat_pfp,
+                        Array_agg(cm.chat_member_uid) AS members
+                FROM     chats
+                join     chat.chat_members AS cm
+                ON       cm.chat_id = chats.chat_id
+                GROUP BY chats.chat_id,
+                        chats.chat_name,
+                        chats.chat_pfp ), finalize AS
+        (
+                SELECT   chat.chat_name,
+                        chat.members,
+                        chat.chat_id,
+                        CASE
+                                WHEN (
+                                                    Cardinality(chat.members) = 1) THEN
+                                            (
+                                                SELECT pfp
+                                                FROM   user_profiles AS up
+                                                WHERE  up.UID = chat.members[1] limit 1 )
+                                ELSE chat.chat_pfp
+                        END          AS chat_pfp
+                FROM     chat_members AS chat
+                GROUP BY chat.chat_name,
+                        chat.chat_pfp,
+                        chat.chat_id,
+                        chat.members )
+        SELECT *
+        FROM   finalize; 
+    """
+
+    GET_MEMBERS = """
+        SELECT PROFILE.pfp,
+            PROFILE.display_name,
+            users.username,
+            users.UID,
+            cm.chat_id
+        FROM   chat.chat_members AS cm
+            join users
+                ON cm.chat_member_uid = users.UID
+            join user_profiles AS PROFILE
+                ON users.UID = PROFILE.UID
+        WHERE  cm.chat_id = ANY ( $chats )  
+
+    """
+
+
+class MessageQ(metaclass=_QueryCreator):
+    INSERT = """
+    INSERT into chat.chat_messages(
+        chat_message_parent_id,
+        chat_message_channel_id,
+        chat_message_author,
+        chat_message_content
+    ) VALUES (
+        $parent_id,
+        $channel_id,
+        $author,
+        $content
+    );
     """

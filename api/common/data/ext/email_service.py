@@ -1,49 +1,47 @@
-from typing import List, Optional, Union
-
+from typing import List, Union
 from fastapi_mail import MessageSchema, FastMail, ConnectionConfig
-
-from common.data.ext.config import DEFAULT_CONF
 
 
 class EmailService(object):
-    INCL_NAME = 'Socials'
-    INCL_NAME_PREFIX = True
-    INCL_APPLY_AUTO = True
-    
-    def __init__(self, conf : ConnectionConfig = DEFAULT_CONF):
+
+    def __init__(self, config: ConnectionConfig, incl_name: str = None):
         self._user_store = dict()
-        self.conf = conf
-    
-    def __prepareMessage(
+        self._config = config
+        self._incl_name = incl_name
+
+    def _prepareMessage(
         self,
         subject: str,
         target: Union[List[str], str],
         body: str
-        ) -> MessageSchema:
-        
-        cls = self.__class__
-        if cls.INCL_NAME_PREFIX and not subject.startswith(cls.INCL_NAME):
-            if not cls.INCL_APPLY_AUTO:
-                return None
-            subject = f'{cls.INCL_NAME} - {subject}'
-            
+    ) -> MessageSchema:
+
+        incl_name = self._incl_name
+        if incl_name is not None and not subject.startswith(incl_name):
+            subject = f'{incl_name} - {subject}'
+
         if not target:
             return None
 
         if isinstance(target, str):
             target = [target]
-        
+
         return MessageSchema(
-            subject = subject,
-            recipients = target,
-            body = body,
-            subtype = 'html'
+            subject=subject,
+            recipients=target,
+            body=body,
+            subtype='html'
         )
-    
-    async def sendMail(self, *args, **kwargs) -> bool:
-        message = self.__prepareMessage(*args, **kwargs)
+
+    async def sendMail(
+        self,
+        subject: str,
+        target: Union[List[str], str],
+        body: str
+    ) -> bool:
+        message: MessageSchema = self._prepareMessage(subject, target, body)
         if message is None:
             return False
-        fm = FastMail(self.conf)
+        fm = FastMail(self._config)
         await fm.send_message(message)
         return True

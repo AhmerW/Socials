@@ -14,7 +14,7 @@ from common.internal.access import InternalUser
 from common.internal.limits import INTERNAL_USERNAME_PREFIX
 
 
-from gateway.ctx import ServerContext as ctx
+from gateway import ctx
 from gateway.core.models import User
 from common.response import Success, Responses
 from common.errors import Error, Errors
@@ -50,18 +50,18 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
-    @classmethod
-    def create(cls, data: dict, expires_delta: Optional[timedelta] = None):
-        copy = data.copy()
-        expire = datetime.utcnow() + \
-            (expires_delta if expires_delta else timedelta(minutes=TOKEN_EXPIRE))
-        copy.update({"exp": expire})
-        encoded_jwt = jwt.encode(copy, SECRET_KEY, algorithm=ALGORITHM)
 
-        return Token(
-            access_token=encoded_jwt,
-            token_type=TOKEN_TYPE
-        )
+def _createToken(data: dict, expires_delta: Optional[timedelta] = None) -> Token:
+    copy = data.copy()
+    expire = datetime.utcnow() + \
+        (expires_delta if expires_delta else timedelta(minutes=TOKEN_EXPIRE))
+    copy.update({"exp": expire})
+    encoded_jwt = jwt.encode(copy, SECRET_KEY, algorithm=ALGORITHM)
+
+    return Token(
+        access_token=encoded_jwt,
+        token_type=TOKEN_TYPE
+    )
 
 
 class AuthData(BaseModel):
@@ -154,7 +154,7 @@ async def authToken(
     )
     if not user:
         raise credentials_exception
-    access_token = Token.create(
+    access_token = _createToken(
         data={"sub": user.username},
         expires_delta=timedelta(minutes=TOKEN_EXPIRE)
     )
