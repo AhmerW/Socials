@@ -5,6 +5,39 @@ from dotenv import load_dotenv
 load_dotenv('.env')
 
 
+"""
+.env file format
+
+# Server Data
+SERVER_HOST=
+SERVER_PORT=
+
+SERVER_DB_DB=
+SERVER_DB_USER=
+SERVER_DB_HOST=
+SERVER_DB_PORT=
+SERVER_DB_PASSWD=
+
+# SERVER_AUTH
+SERVER_AUTH_SKEY=
+SERVER_AUTH_ALGO=
+SERVER_AUTH_EXPIRE=
+
+# MAIL AUTH
+MAIL_PASSWD=
+MAIL_SKEY=
+
+# Caching server
+
+CACHE_SERVER_HOST=
+CACHE_SERVER_PORT=
+CACHE_SRVER_AUTH=
+CACHE_SERVER_MAIN_DB= 
+
+USER_CACHE_DB= 
+"""
+
+
 def falseThenNone(value):
     if str(value).lower().strip() in (
         '0',
@@ -16,21 +49,12 @@ def falseThenNone(value):
     return value
 
 
-SERVER_IP = '127.0.0.1'
-SERVER_PORT = 8000
+SERVER_IP = os.getenv('SERVER_HOST')
+SERVER_PORT = int(os.getenv('SERVER_PORT'))
 SERVER_PROTOCOL = 'http'
 SERVER_URL = f'{SERVER_PROTOCOL}://{SERVER_IP}:{SERVER_PORT}'
 
-# Chat Service
-SERVICE_CHAT_IP = SERVER_IP
-SERVICE_CHAT_PORT = 8011
-SERVICE_CHAT_REDIS_IP = SERVER_IP
-SERVICE_CHAT_REDIS_PORT = 8012
-SERVICE_CHAT_RMQ_IP = SERVER_IP
-SERVICE_CHAT_RMQ_PORT = 5672
 
-# Notification Service
-# AK : Apache Kafka
 SERVICE_NC_IP = SERVER_IP
 SERVICE_NC_PORT = 8021
 SERVICE_NC_AK_BROKER_IP = 'localhost'
@@ -42,6 +66,13 @@ SERVICE_NC_AK_BROKER = '{host}:{port}'.format(
 
 # Cache
 
-USER_CACHE_HOST = os.getenv('USER_CACHE_HOST')
-USER_CACHE_PORT = os.getenv('USER_CACHE_PORT')
-USER_CACHE_AUTH = falseThenNone(os.getenv('USER_CACHE_AUTH'))
+
+CACHE_SERVER_HOST = os.getenv('CACHE_SERVER_HOST')
+CACHE_SERVER_PORT = os.getenv('CACHE_SERVER_PORT')
+CACHE_SERVER_MAIN_DB = int(os.getenv('CACHE_SERVER_MAIN_DB'))
+CACHE_SERVER_AUTH = falseThenNone(os.getenv('CACHE_SERVER_AUTH'))
+
+USER_CACHE_HOST = CACHE_SERVER_HOST
+USER_CACHE_PORT = CACHE_SERVER_PORT
+USER_CACHE_DB = int(os.getenv('USER_CACHE_DB'))
+USER_CACHE_AUTH = falseThenNone(os.getenv('CACHE_SERVER_AUTH'))

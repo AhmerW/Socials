@@ -4,6 +4,10 @@ from pydantic import BaseModel
 from gateway.core.models import User
 
 
+class ChatID(BaseModel):
+    chat_id: int
+
+
 class Chat(BaseModel):
     name: str
     members: List[User]

@@ -35,17 +35,20 @@ async def messageSend(
             Errors.VALIDATION_ERROR,
             'Invalid msg'
         )
-    # In chat context name it chat/_id instead of a channel
+
     message = msg.dict()
-    message['chat_id'] = message.pop('channel_id')
+    members = await getChatMembers(message['chat_id'])
+    if not members:
+        raise Error(Errors.INVALID_DATA, 'Please retry later')
+
+    if not any(member.get('uid') == user.uid for member in members):
+        raise Error(Errors.UNAUTHORIZED)
 
     background_tasks.add_task(
         insertChatMessage,
         user,
         msg
     )
-
-    members = await getChatMembers(message['chat_id'])
     for member in members:
         await pushEvent(
             'user.message.new',

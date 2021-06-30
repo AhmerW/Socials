@@ -1,6 +1,8 @@
-from fastapi import APIRouter, Depends
+
+from fastapi import APIRouter, Depends, Request
 from common.data.local.db import DBOP
 from common.errors import Error, Errors
+from common.middleware.cache.cache_reset import call_after
 
 from common.response import Responses, Success
 from common.queries import ChatQ, UserQ
@@ -11,8 +13,9 @@ from gateway.core.models import User
 
 from gateway.core.repo.base import BaseRepo
 from gateway.core.repo.repos import ChatRepo
+from gateway.resources.chat import chat_cache
 from gateway.resources.chat.chat_const import MAX_CHATS_PREMIUM, MAX_CHATS_STANDARD, MAX_CHAT_NAME_LEN, MIN_CHAT_NAME_LEN
-from gateway.resources.chat.models import Chat, ChatCreateModel
+from gateway.resources.chat.models import Chat, ChatCreateModel, ChatID
 
 router = APIRouter()
 
@@ -91,3 +94,24 @@ async def chatNew(
         # dispatch notification event if chat is a group
         # otherwise wait until a message has been sent
         pass
+
+
+async def updateChatMembers_fromRequest(request: Request):
+    chat_id = (await request.json()).get('chat_id')
+    if chat_id is not None:
+        await chat_cache.updateChatMembers(chat_id)
+
+
+@ router.post('/add-member')
+@ call_after(
+    only_on_success=True,
+    callback=updateChatMembers_fromRequest
+)
+async def chatAddUser(
+    request: Request,
+    id_: ChatID,
+    user: User = Depends(getUser)
+):
+    chat_id = id_.chat_id
+
+    return Success('test')

@@ -117,7 +117,7 @@ async def connectWs(websocket: WebSocket, ott: str, device: str):
         headers={'Authorization': token}
     ) as response:
         resp = await response.json()
-        if not resp['ok']:
+        if not resp.get('ok'):
             return await websocket.close(code=status_)
 
     await websocket.accept()

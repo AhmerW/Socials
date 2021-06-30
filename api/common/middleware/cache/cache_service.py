@@ -23,16 +23,16 @@ class Cache(object):
         ttl: int = 360
     ):
         """Cache using the default settings"""
-        def wrapper(func):
+        def decorator(func):
             @wraps(func)
-            async def inner(*args, **kwargs):
+            async def wrapper(*args, **kwargs):
                 request = kwargs.get('request')
                 if request is not None:
                     pass
 
-            return inner
+            return wrapper
 
-        return wrapper
+        return decorator
 
     def __call__(self):
         pass

@@ -77,8 +77,7 @@ class ChatRepo(BaseRepo):
 
     async def fetchChatMembers(self, chat_id: int) -> List[int]:
         members = await self.fetchChatsMembers([chat_id])
-        print("from db: ", members)
-        return members.get('chat_id', list())
+        return members.get(chat_id, list())
 
 
 class MessageRepo(BaseRepo):
@@ -91,7 +90,7 @@ class MessageRepo(BaseRepo):
             query=MessageQ.INSERT(
                 author=self._user.uid,
                 parent_id=msg.parent_id,
-                channel_id=msg.channel_id,
+                chat_id=msg.chat_id,
                 content=msg.content
             ),
             op=db.DBOP.Execute

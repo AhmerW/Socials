@@ -3,12 +3,11 @@ from pydantic import BaseModel
 
 
 class Message(BaseModel):
-    # channel ids : any of the potential different channels
-    # the most common channel is chat (chat_id)
 
+    message_id: Optional[int] = None
     parent_id: Optional[int] = None
     assets: Optional[List[str]] = []
-    channel_id: int
+    chat_id: int
     content: str
 
     class Config:

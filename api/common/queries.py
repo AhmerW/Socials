@@ -222,12 +222,12 @@ class MessageQ(metaclass=_QueryCreator):
     INSERT = """
     INSERT into chat.chat_messages(
         chat_message_parent_id,
-        chat_message_channel_id,
+        chat_message_chat_id,
         chat_message_author,
         chat_message_content
     ) VALUES (
         $parent_id,
-        $channel_id,
+        $chat_id,
         $author,
         $content
     );

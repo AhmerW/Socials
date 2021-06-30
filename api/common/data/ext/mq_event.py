@@ -1,28 +1,41 @@
 
 
+from typing import Any, Dict
 from common.data.ext.mq_manager import MQManager
 from gateway import ctx
 
 retries = []
 
 
-def _setRetry(*a, **kw):
-    retries.append(
-        (a, kw)
-    )
+def retry(event, event_data):
+    # TODO: implement retry system
+    pass
 
 
-async def _pushEvent(producer, *args, **kwargs) -> bool:
-    if not isinstance(producer, MQManager):
-        return False
-
-    return await producer.send(*args, **kwargs)
+async def sendNotice(target, info):
+    print('sending notice to: ', target)
 
 
-async def pushEvent(retry=True, producer=None, *args, **kwargs):
+async def pushEvent(event: str, event_data: Dict[str, Any], producer=None, cache=None):
     if producer is None:
         producer = ctx.producer
-    s = pushEvent(producer, *args, **kwargs)
-    if s is False and retry:
-        _setRetry(*args, **kwargs)
-    return s
+
+    if cache is None:
+        cache = ctx.user_cache
+
+    try:
+        transfer_data = event_data.get('transfer_data')
+        target = transfer_data.get('target', dict()).get('uid')
+        if target is None:
+            return retry(event, event_data)
+    except KeyError:
+        return None
+
+    info = await ctx.user_cache.con.get(target)
+    if isinstance(info, bytes):
+        info = info.decode('utf-8')
+
+    if not info:
+        return await sendNotice(target, info)
+
+    return await producer.send(event, event_data)
