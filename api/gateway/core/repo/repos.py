@@ -86,7 +86,7 @@ class MessageRepo(BaseRepo):
         self._user = user
 
     async def insertChatMessage(self, msg: Message):
-        await self.run(
+        return await self.run(
             query=MessageQ.INSERT(
                 author=self._user.uid,
                 parent_id=msg.parent_id,

@@ -231,4 +231,5 @@ class MessageQ(metaclass=_QueryCreator):
         $author,
         $content
     );
+    RETURNING chat.chat_messages.message_id
     """

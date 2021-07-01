@@ -1,6 +1,7 @@
 
 
 from typing import Any, Dict
+from common.data.ext.app.status import Status
 from common.data.ext.mq_manager import MQManager
 from gateway import ctx
 
@@ -30,12 +31,9 @@ async def pushEvent(event: str, event_data: Dict[str, Any], producer=None, cache
             return retry(event, event_data)
     except KeyError:
         return None
+    status = await ctx.user_cache.con.exists(target)
 
-    info = await ctx.user_cache.con.get(target)
-    if isinstance(info, bytes):
-        info = info.decode('utf-8')
-
-    if not info:
-        return await sendNotice(target, info)
+    if status is None:  # is offline
+        return await sendNotice(target, status)
 
     return await producer.send(event, event_data)

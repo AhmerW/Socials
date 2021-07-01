@@ -1,11 +1,27 @@
 import asyncio
+import os
+import dotenv
+import aioredis
 from fastapi import FastAPI, WebSocket, status, WebSocketDisconnect
 import aiohttp
+import websockets
 
 from common import utils
 from common.data.ext.mq_manager import MQManager, MQManagerType, deserializer
 
-from services.dispatch_service.ctx import ServiceContext as ctx
+from services.dispatch_service import ctx
+
+
+def decodeValue(value, default=None):
+    if isinstance(value, bytes):
+        value = value.decode('utf-8')
+    if value.isdigit():
+        try:
+            value = int(value)
+        except ValueError:
+            value = default
+
+    return value
 
 
 class NotificationManager():
@@ -31,17 +47,20 @@ class NotificationManager():
         self.consumer = MQManager(
             MQManagerType.Consumer,
             utils.SERVICE_NC_AK_BROKER,
-            'user.message.new',
-            'user.message.delete',
             value_deserializer=deserializer
         )
         await self.consumer.start()
+        self.consumer.client.subscribe(pattern='^user.*')
+
         async for msg in self.consumer.client:
             transfer_data = msg.value.get('transfer_data')
             if transfer_data is None:
                 continue
             data = self.clients.get(
-                transfer_data.get('target')
+                transfer_data.get(
+                    'target',
+                    dict()
+                ).get('uid')
             )
             del msg.value['transfer_data']
             if data:
@@ -54,7 +73,7 @@ class NotificationManager():
     async def addUser(self, uid, ws, device_id):
         """
         Adds user to the object
-        Returns the data or false dependent on 
+        Returns the data or false dependent on
         if the operation was a success.
         """
         data = self.clients.get(uid)
@@ -74,6 +93,16 @@ class NotificationManager():
             self.clients[uid] = [ws_info]
         else:
             self.clients[uid].append(ws_info)
+
+        # 1 : Status.ONLINE
+
+        if not await ctx.user_cache.exists(uid):
+            # TODO: instead of default status 1, implement preffered status
+            await ctx.user_cache.hmset_dict(uid, connections=1, status=1)
+        else:
+
+            await ctx.user_cache.hincrby(uid, 'connections', 1)
+
         return ws_info
 
     async def removeUser(self, uid, device) -> bool:
@@ -82,6 +111,20 @@ class NotificationManager():
             for i, con in enumerate(data):
                 if con['id'] == device:
                     self.clients[uid].pop(i)
+                    info = await ctx.user_cache.hgetall(uid)
+                    info = decodeValue(info)
+
+                    if not isinstance(info, dict):
+                        print("not is dict?")
+                        # already removed ??
+                        return True
+                    connections = info.get('connections')
+                    if connections == 1:
+                        await ctx.user_cache.delete(uid)
+                    else:
+                        await ctx.user_cache.hset(uid, 'connections', connections-1)
+                    print("remvoed user.")
+                    # send http call for sending notice
                     return True
 
         return False
@@ -94,18 +137,29 @@ verification_session = None
 app = FastAPI()
 
 
-@app.on_event('startup')
+@ app.on_event('startup')
 async def onStartup():
+    dotenv.load_dotenv(os.path.join('services', 'dispatch_service', '.env'))
+    auth = os.getenv('USER_CACHE_AUTH')
+
+    if auth in (0, '0'):
+        auth = None
+
+    ctx.user_cache = await aioredis.create_redis_pool(
+        (os.getenv('USER_CACHE_HOST'), os.getenv('USER_CACHE_PORT')),
+        password=auth,
+        db=int(os.getenv('USER_CACHE_DB'))
+    )
     ctx.ncm = NotificationManager()
     asyncio.create_task(ctx.ncm.start())
 
 
-@app.on_event('shutdown')
+@ app.on_event('shutdown')
 async def onShutdown():
     await ctx.ncm.cosumer.stop()
 
 
-@app.websocket('/ws')
+@ app.websocket('/ws')
 async def connectWs(websocket: WebSocket, ott: str, device: str):
     global verification_session
     if verification_session is None:
@@ -131,10 +185,15 @@ async def connectWs(websocket: WebSocket, ott: str, device: str):
     try:
         while True:
             msg = await data['queue'].get()
+            print("delivering: ", msg)
             if msg.get('transfer_data') is not None:
                 del msg['transfer_data']
             await websocket.send_json(msg)
-    except WebSocketDisconnect:
+    except (
+            WebSocketDisconnect,
+            ConnectionError,
+            websockets.exceptions.WebSocketException
+    ):
         print("removing ", await ctx.ncm.removeUser(device))
 
 """

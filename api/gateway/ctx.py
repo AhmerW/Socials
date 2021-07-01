@@ -16,8 +16,8 @@ PROTOCOL = 'http'
 URL = f'{PROTOCOL}://{HOST}:{PORT}'
 ACCOUNT_VERIFY_URL = f'{URL}/account/verify'
 
-# asyncpg.Pool connections
-# (must be created in an async function)
+
+# must be created in an async function
 producer = None
 pool: asyncpg.pool.Pool = None
 chat_pool: asyncpg.pool.Pool = None

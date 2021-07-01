@@ -58,13 +58,4 @@ async def messageSend(
                 target=member
             ))
 
-    await ctx.producer.send(
-        'user.message.new',
-        createEvent(
-            Events.Message,
-            message,
-            target=user.uid
-        )
-    )
-
     return Success('', message)

@@ -6,17 +6,20 @@ from common.middleware.cache.cache_backend import RedisCachingBackend
 
 class CacheClient():
     def __init__(self, con: aioredis.ConnectionsPool) -> None:
-        self._con = con
+        self._con: aioredis.Redis = con
 
     @property
-    def con(self):
+    def con(self) -> aioredis.Redis:
         return self._con
 
     @classmethod
-    async def create(cls, *args, **kwargs) -> type:
+    async def create(cls, *args, **kwargs) -> aioredis.Redis:
         return CacheClient(
             await aioredis.create_redis_pool(
                 *args,
                 **kwargs
             )
         )
+
+    def getValue(value):
+        pass
