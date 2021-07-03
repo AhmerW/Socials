@@ -1,7 +1,8 @@
 
 
-from typing import Dict, List
+from typing import Any, Dict, List
 from asyncpg.connection import Connection
+from gateway import ctx
 
 from gateway.core.repo.base import BaseRepo
 from gateway.core.models import User
@@ -40,6 +41,11 @@ class UserRepo(BaseRepo):
 
 
 class ChatRepo(BaseRepo):
+    def __init__(self, *args, **kwargs):
+        if not kwargs.get('pool'):
+            kwargs['pool'] = ctx.chat_pool
+
+        super().__init__(*args, **kwargs)
 
     async def createNew(
         self,
@@ -79,6 +85,25 @@ class ChatRepo(BaseRepo):
         members = await self.fetchChatsMembers([chat_id])
         return members.get(chat_id, list())
 
+    async def fetchChatMessages(
+        self,
+        chat_id: int,
+        offset: int,
+        amount: int,
+        reply_offset: int,
+        replies: int
+    ) -> List[Dict[str, Any]]:
+        return await self.run(
+            query=ChatQ.FETCH_MESSAGES(
+                chat_id=chat_id,
+                offset=offset,
+                amount=amount,
+                reply_offset=reply_offset,
+                replies=replies
+            ),
+            op=db.DBOP.Fetch
+        )
+
 
 class MessageRepo(BaseRepo):
     def __init__(self, user: User, *a, **kw):
@@ -93,5 +118,5 @@ class MessageRepo(BaseRepo):
                 chat_id=msg.chat_id,
                 content=msg.content
             ),
-            op=db.DBOP.Execute
+            op=db.DBOP.FetchFirst
         )

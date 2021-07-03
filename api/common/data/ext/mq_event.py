@@ -33,7 +33,7 @@ async def pushEvent(event: str, event_data: Dict[str, Any], producer=None, cache
         return None
     status = await ctx.user_cache.con.exists(target)
 
-    if status is None:  # is offline
+    if not status:  # is offline
         return await sendNotice(target, status)
 
     return await producer.send(event, event_data)

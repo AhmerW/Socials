@@ -12,10 +12,11 @@ from gateway.core.auth.auth import getUser
 from gateway.core.models import User
 
 from gateway.core.repo.base import BaseRepo
-from gateway.core.repo.repos import ChatRepo
+from gateway.core.repo.repos import ChatRepo, MessageRepo
 from gateway.resources.chat import chat_cache
 from gateway.resources.chat.chat_const import MAX_CHATS_PREMIUM, MAX_CHATS_STANDARD, MAX_CHAT_NAME_LEN, MIN_CHAT_NAME_LEN
-from gateway.resources.chat.models import Chat, ChatCreateModel, ChatID
+from gateway.resources.chat.models import Chat, ChatCreateModel, ChatFetchMessagesModel, ChatID
+from gateway.resources.message.models import Message
 
 router = APIRouter()
 
@@ -23,34 +24,16 @@ router = APIRouter()
 @router.get('/get')
 async def chatGet(user: User = Depends(getUser)):
 
-    async with BaseRepo(pool=ctx.chat_pool) as repo:
+    async with ChatRepo(pool=ctx.chat_pool) as repo:
         chats = await repo.run(
             query=ChatQ.GET_ALL_CHATS(
                 uid=user.uid
             ),
             op=DBOP.Fetch
         )
-        members = await repo.run(
-            query=ChatQ.GET_MEMBERS(
-                chats=[
-                    chat['chat_id'] for chat in chats
-                ]
-            ),
-            op=DBOP.Fetch
+        members_dict = await repo.fetchChatsMembers(
+            [chat['chat_id'] for chat in chats]
         )
-        # Replace all List<int> with List<User>
-
-        members_dict = dict.fromkeys(
-            [
-                chat['chat_id'] for chat in chats
-            ],
-            list()
-        )
-        for member in members:
-            # Don't need the chat_id in the final json applied with each member
-            _id = member['chat_id']
-            del member['chat_id']
-            members_dict[_id].append(member)
 
         for chat in chats:
             chat['members'] = members_dict.get(chat['chat_id'])
@@ -100,6 +83,22 @@ async def updateChatMembers_fromRequest(request: Request):
     chat_id = (await request.json()).get('chat_id')
     if chat_id is not None:
         await chat_cache.updateChatMembers(chat_id)
+
+
+@router.post('/messages')
+async def chatFetchMessages(
+    info: ChatFetchMessagesModel,
+    _: User = Depends(getUser)
+):
+    async with ChatRepo() as repo:
+        messages = await repo.fetchChatMessages(
+            info.chat_id,
+            info.offset,
+            info.amount,
+            info.reply_offset,
+            info.replies,
+        )
+    return Success('', {'messages': messages})
 
 
 @ router.post('/add-member')

@@ -1,5 +1,6 @@
 import asyncio
 import os
+from asyncpg.connection import connect
 import dotenv
 import aioredis
 from fastapi import FastAPI, WebSocket, status, WebSocketDisconnect
@@ -12,9 +13,15 @@ from common.data.ext.mq_manager import MQManager, MQManagerType, deserializer
 from services.dispatch_service import ctx
 
 
+MAX_WS_CON = 3
+
+
 def decodeValue(value, default=None):
     if isinstance(value, bytes):
         value = value.decode('utf-8')
+    if not isinstance(value, str):
+        return value
+
     if value.isdigit():
         try:
             value = int(value)
@@ -25,7 +32,6 @@ def decodeValue(value, default=None):
 
 
 class NotificationManager():
-    MAX_WS_CON = 3
 
     def __init__(self):
         self.consumer = None
@@ -78,7 +84,7 @@ class NotificationManager():
         """
         data = self.clients.get(uid)
         if data is not None:
-            if len(data) > self.__class__.MAX_WS_CON:
+            if len(data) > MAX_WS_CON:
                 return False
             for i, obj in enumerate(data):
                 if obj['id'] == device_id:
@@ -96,11 +102,18 @@ class NotificationManager():
 
         # 1 : Status.ONLINE
 
-        if not await ctx.user_cache.exists(uid):
+        connections = await ctx.user_cache.hget(uid, 'connections')
+        print(connections)
+        connections = decodeValue(connections)
+        print(connections)
+
+        if not connections:
             # TODO: instead of default status 1, implement preffered status
             await ctx.user_cache.hmset_dict(uid, connections=1, status=1)
         else:
+            if connections > MAX_WS_CON:
 
+                return False
             await ctx.user_cache.hincrby(uid, 'connections', 1)
 
         return ws_info
@@ -118,7 +131,8 @@ class NotificationManager():
                         print("not is dict?")
                         # already removed ??
                         return True
-                    connections = info.get('connections')
+                    print('info')
+                    connections = info.get('connections', 1)
                     if connections == 1:
                         await ctx.user_cache.delete(uid)
                     else:
@@ -175,8 +189,12 @@ async def connectWs(websocket: WebSocket, ott: str, device: str):
             return await websocket.close(code=status_)
 
     await websocket.accept()
+    try:
+        uid = resp['data']['uid']
+    except KeyError:
+        return await websockets.close(code=status_)
     data = await ctx.ncm.addUser(
-        resp['data']['uid'],
+        uid,
         websocket,
         device
     )
@@ -185,7 +203,7 @@ async def connectWs(websocket: WebSocket, ott: str, device: str):
     try:
         while True:
             msg = await data['queue'].get()
-            print("delivering: ", msg)
+           # print("delivering: ", msg)
             if msg.get('transfer_data') is not None:
                 del msg['transfer_data']
             await websocket.send_json(msg)
@@ -194,7 +212,9 @@ async def connectWs(websocket: WebSocket, ott: str, device: str):
             ConnectionError,
             websockets.exceptions.WebSocketException
     ):
-        print("removing ", await ctx.ncm.removeUser(device))
+        print("removing ", await ctx.ncm.removeUser(uid, device))
+    except Exception as e:
+        print('another exception: ', e)
 
 """
 When client fetches user details also return device id's

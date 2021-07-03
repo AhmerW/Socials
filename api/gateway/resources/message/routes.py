@@ -1,3 +1,4 @@
+import time
 import asyncio
 from fastapi import APIRouter, Depends
 from starlette.background import BackgroundTasks
@@ -44,11 +45,14 @@ async def messageSend(
     if not any(member.get('uid') == user.uid for member in members):
         raise Error(Errors.UNAUTHORIZED)
 
-    background_tasks.add_task(
-        insertChatMessage,
-        user,
-        msg
-    )
+    async with MessageRepo(user) as repo:
+        msg_in_db = await repo.insertChatMessage(msg)
+        message['message_id'] = msg_in_db.get('message_id')
+
+    message['created_at'] = int(time.time())
+    message['author_id'] = user.uid
+    message['replies'] = []
+
     for member in members:
         await pushEvent(
             'user.message.new',

@@ -203,19 +203,51 @@ class ChatQ(metaclass=_QueryCreator):
     """
 
     GET_MEMBERS = """
-        SELECT PROFILE.pfp,
-            PROFILE.display_name,
-            users.username,
-            users.UID,
-            cm.chat_id
-        FROM   chat.chat_members AS cm
-            join users
-                ON cm.chat_member_uid = users.UID
-            join user_profiles AS PROFILE
-                ON users.UID = PROFILE.UID
-        WHERE  cm.chat_id = ANY ( $chats )  
-
+        SELECT PROFILE.PFP,
+            PROFILE.DISPLAY_NAME,
+            USERS.USERNAME,
+            USERS.UID,
+            CM.CHAT_ID
+        FROM CHAT.CHAT_MEMBERS AS CM
+        JOIN USERS ON CM.CHAT_MEMBER_UID = USERS.UID
+        JOIN USER_PROFILES AS PROFILE ON USERS.UID = PROFILE.UID
+        WHERE CM.CHAT_ID = ANY ($chats)
     """
+
+    FETCH_MESSAGES = \
+        """
+        SELECT
+        CM.MESSAGE_ID,
+        CM.CHAT_MESSAGE_AUTHOR as author_id,
+        CM.CHAT_MESSAGE_CONTENT as content,
+        CM.CHAT_MESSAGE_CREATED_AT as created_at,
+        REPLIES
+        FROM
+        CHAT.CHAT_MESSAGES AS CM,
+        LATERAL (
+            SELECT
+            ARRAY (
+                SELECT
+                ROW(
+                    MSG.MESSAGE_ID,
+                    MSG.CHAT_MESSAGE_AUTHOR,
+                    MSG.CHAT_MESSAGE_CONTENT,
+                    MSG.CHAT_MESSAGE_CREATED_AT
+                )
+                FROM
+                CHAT.CHAT_MESSAGES AS MSG
+                WHERE
+                MSG.CHAT_MESSAGE_PARENT_ID = CM.MESSAGE_ID OFFSET $reply_offset
+                LIMIT
+                $replies
+            ) AS REPLIES
+        ) REPLIES
+        WHERE
+        CM.CHAT_MESSAGE_CHAT_ID = $chat_id OFFSET $offset
+        LIMIT
+        $amount;
+
+        """
 
 
 class MessageQ(metaclass=_QueryCreator):
@@ -230,6 +262,6 @@ class MessageQ(metaclass=_QueryCreator):
         $chat_id,
         $author,
         $content
-    );
-    RETURNING chat.chat_messages.message_id
+    )
+    RETURNING chat.chat_messages.message_id;
     """

@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from pydantic import BaseModel
 
 from gateway.core.models import User
@@ -15,4 +15,14 @@ class Chat(BaseModel):
 
 class ChatCreateModel(BaseModel):
     members: List[int]
-    name: str = None
+    name: Optional[str] = None
+
+
+class ChatFetchMessagesModel(BaseModel):
+    chat_id: int
+
+    offset: Optional[int] = 0
+    amount: Optional[int] = 10
+
+    reply_offset: Optional[int] = 0
+    replies: Optional[int] = 5
