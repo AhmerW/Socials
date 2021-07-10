@@ -242,10 +242,10 @@ class ChatQ(metaclass=_QueryCreator):
                 $replies
             ) AS REPLIES
         ) REPLIES
-        WHERE
-        CM.CHAT_MESSAGE_CHAT_ID = $chat_id OFFSET $offset
-        LIMIT
-        $amount;
+        WHERE CM.CHAT_MESSAGE_CHAT_ID = $chat_id 
+        ORDER BY CM.MESSAGE_ID DESC
+        OFFSET $offset
+        LIMIT $amount;
 
         """
 
@@ -264,4 +264,7 @@ class MessageQ(metaclass=_QueryCreator):
         $content
     )
     RETURNING chat.chat_messages.message_id;
+    """
+
+    GET_MESSAGE_REPLIES = """
     """

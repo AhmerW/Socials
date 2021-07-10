@@ -2,7 +2,7 @@ import json
 
 from enum import Enum
 from aiokafka import AIOKafkaProducer, AIOKafkaConsumer
-from common.utils import SERVICE_NC_AK_BROKER
+from common.utils import SVC_DISPATCH_AK_BROKER
 
 
 class MQManagerType(Enum):
@@ -19,7 +19,7 @@ def serializer(value):
 
 
 class MQManager():
-    def __init__(self, mq_type: MQManagerType, broker=SERVICE_NC_AK_BROKER, *args, **kwargs):
+    def __init__(self, mq_type: MQManagerType, broker=SVC_DISPATCH_AK_BROKER, *args, **kwargs):
         self.type_ = mq_type
         if self.type_ == MQManagerType.Producer:
             self.client = AIOKafkaProducer(

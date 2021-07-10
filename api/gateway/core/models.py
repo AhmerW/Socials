@@ -14,3 +14,7 @@ class User(BaseModel):
 
 class TokenModel(BaseModel):
     token: str
+
+
+class DeviceIDModel(BaseModel):
+    device_id: str

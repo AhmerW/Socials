@@ -9,6 +9,7 @@ class OTToken(object):
     TOKEN_BYTES = 10
     dict_otts = ctx.otts
     """
+    
     Used for generating and verifying one-time tokens.
     Primarly used as an IPC-system between the different services,
     in order to verify an user session.

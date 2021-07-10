@@ -10,7 +10,7 @@ retries = []
 
 def retry(event, event_data):
     # TODO: implement retry system
-    pass
+    print("[ERROR] retrying... ", event_data)
 
 
 async def sendNotice(target, info):
@@ -31,9 +31,10 @@ async def pushEvent(event: str, event_data: Dict[str, Any], producer=None, cache
             return retry(event, event_data)
     except KeyError:
         return None
-    status = await ctx.user_cache.con.exists(target)
 
+    status = await ctx.user_cache.con.con.exists(target)
     if not status:  # is offline
         return await sendNotice(target, status)
 
+    print(f"{target} is online, dipatching event")
     return await producer.send(event, event_data)

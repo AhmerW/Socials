@@ -13,29 +13,15 @@ PYTHON_COMMAND = 'python'
 DEFAULT_CMD = ['start', 'cmd', '/k']
 
 
-SERVICE_CONFIG = {
-    'dispatch_service': {
-        'type': 'api'
-    },
-    'chat_service': {
-        'type': 'api',
-        'children': [
-            {
-                'cmd': [*DEFAULT_CMD, 'celery', '-A', 'services.chat_service.worker.worker.celery', 'worker', '--pool=eventlet'],
-                'args': {'shell': True}
-            },
-            {
-                'cmd': [*DEFAULT_CMD, 'celery', 'flower'],
-                'args': {'shell': True}
-            }
-        ]
-    }
-}
+SERVICE_CONFIG = {}
 
 if __name__ == '__main__':
     load_dotenv('.env')
     _load_services = True
     args = [a for a in sys.argv[1::]]
+
+    # Python services are not not loaded as an external process.
+    # (Removed from SERVICE_CONFIG) too.
 
     for arg in args:
         if not arg.startswith('-'):
@@ -52,6 +38,9 @@ if __name__ == '__main__':
             if 'closed' in service:
                 continue
             service_config = SERVICE_CONFIG.get(service)
+            if not service_config:
+                continue
+
             path = os.path.join(os.getcwd(), 'services', service, 'service.py')
             if os.path.isfile(path):
                 if os.name == 'nt':

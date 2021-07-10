@@ -23,6 +23,8 @@ async def verify(ott: str, user: User = Depends(auth.getUser)):
     if uid != user.uid:
         raise Error(Errors.UNAUTHORIZED, status=status.HTTP_401_UNAUTHORIZED)
 
+    ctx.otts.pop(ott, None)
+
     return Success(Responses.OTT_VERIFIED, data={'uid': user.uid})
 
 

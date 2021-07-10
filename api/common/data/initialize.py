@@ -24,7 +24,7 @@ async def initializeConnections():
     loc.chat_pool = await _helper_create_pool('chat')
     loc.producer = MQManager(
         MQManagerType.Producer,
-        broker=utils.SERVICE_NC_AK_BROKER,
+        broker=utils.SVC_DISPATCH_AK_BROKER,
         value_serializer=serializer
     )
     loc.cache_client = await CacheClient.create(
@@ -53,3 +53,8 @@ async def initializeConnections():
         raise e(
             'Make sure the apache kafka broker is active!'
         )
+
+
+async def closeConnections():
+    if isinstance(loc.producer, MQManager):
+        await loc.producer.stop()

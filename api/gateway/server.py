@@ -1,6 +1,9 @@
 
 
-from common.data.initialize import initializeConnections
+from common.data.initialize import closeConnections, initializeConnections
+from common.utils import SVC_DISPATCH_IS_EXT
+
+from gateway.resources.ws import routes as ws_routes
 from gateway.resources.ott import routes as ott_routes
 from gateway.resources.user import routes as user_routes
 from gateway.resources.chat import routes as chat_routes
@@ -14,14 +17,14 @@ from gateway.ctx import app
 from gateway.core.auth import auth
 
 
-@app.on_event('startup')
+@ app.on_event('startup')
 async def startup_event():
     await initializeConnections()
 
 
 @ app.on_event('shutdown')
 async def shutdown_event():
-    await ctx.producer.stop()
+    await closeConnections()
 
 
 # Test endpoint
@@ -53,4 +56,11 @@ for prefix, routes in routers.items():
             'router'
         ),
         prefix=f'/{prefix}'
+    )
+
+
+if not SVC_DISPATCH_IS_EXT:
+    app.include_router(
+        ws_routes.router,
+        prefix='/ws'
     )
