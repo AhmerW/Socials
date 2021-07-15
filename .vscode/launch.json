@@ -4,16 +4,28 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-  
         {
-            
             "name": "Socials",
             "type": "python",
             "request": "launch",
-            "program": "start_api.py",
+            "program": "main.py",
             "console": "externalTerminal",
-            "cwd": "${workspaceFolder}\\api",
-        
+            "cwd": "${workspaceFolder}\\api"
         },
+        {
+            "name": "Docker: Python - Fastapi",
+            "type": "docker",
+            "request": "launch",
+            "preLaunchTask": "docker-run: debug",
+            "python": {
+                "pathMappings": [
+                    {
+                        "localRoot": "${workspaceFolder}",
+                        "remoteRoot": "/app"
+                    }
+                ],
+                "projectType": "fastapi"
+            }
+        }
     ]
 }

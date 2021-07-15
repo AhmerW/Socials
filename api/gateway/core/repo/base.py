@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 
+
 from asyncpg import Connection, pool
+import asyncpg
 from fastapi.param_functions import Query
 from common.data.ext.config import DEFAULT_CONF
 
@@ -21,11 +23,15 @@ class BaseRepo():
         # Whether or not we should acquire a database connection
         acquire: bool = True,
         # Defaults to the 'public' schema
-        pool: pool.Pool = ctx.pool
+        pool: pool.Pool = ctx.pool,
+        # Existing connection object
+        con: Connection = None,
+        auto_close_con: bool = True
     ):
         self._acquire = acquire
         self._pool = pool
-        self.con: Connection = None
+        self.con: Connection = con
+        self._close_con = auto_close_con
 
     async def __aenter__(self):
         if not hasattr(self, 'con'):
@@ -42,8 +48,12 @@ class BaseRepo():
         await self.close()
 
     async def close(self):
-        if isinstance(self.con, Connection):
-            await self.con.close()
+        if self._close_con and isinstance(self.con, Connection):
+            try:
+                if not self.con.is_closed():
+                    await self.con.close()
+            except asyncpg.exceptions.InterfaceError:
+                """Assuming connection already released back to the pool"""
 
     async def run(
         self,

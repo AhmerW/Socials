@@ -8,7 +8,7 @@ from gateway.core.repo.repos import ChatRepo
 
 async def updateChatMembers(chat_id: int) -> List[int]:
     async with ChatRepo(pool=ctx.chat_pool) as repo:
-        members = await repo.fetchChatMembers(chat_id)
+        members = await repo.getChatMembers(chat_id)
 
     await ctx.cache_client.con.set(
         chat_id,

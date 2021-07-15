@@ -7,6 +7,7 @@ from common.data.ext.cache_client import CacheClient
 
 from common.data.ext.config import DEFAULT_CONF
 from common.data.ext.email_service import EmailService
+from common.data.ext.mq_manager import MQManager
 
 PROJECT_NAME = 'Socials'
 
@@ -18,7 +19,7 @@ ACCOUNT_VERIFY_URL = f'{URL}/account/verify'
 
 
 # must be created in an async function
-producer = None
+producer: MQManager = None
 pool: asyncpg.pool.Pool = None
 chat_pool: asyncpg.pool.Pool = None
 

@@ -1,22 +1,24 @@
 
 
 from typing import Any, Dict, List
+import asyncpg
 from asyncpg.connection import Connection
+from common.data.ext.event import Notice
 from gateway import ctx
 
 from gateway.core.repo.base import BaseRepo
-from gateway.core.models import User
+from gateway.core.models import NoticeInsert, User
 
 
 from common.data.local import db
-from common.queries import ChatQ, MessageQ, UserQ
+from common.queries import ChatQ, MessageQ, NoticeQ, UserQ
 from gateway.resources.account.ext.tasks import initVerification
 from gateway.resources.chat.models import Chat, ChatCreateModel
 from gateway.resources.message.models import Message
 
 
 class UserRepo(BaseRepo):
-    def __init__(self, user: User, *args, **kwargs):
+    def __init__(self, user: User = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.user = user
 
@@ -24,7 +26,12 @@ class UserRepo(BaseRepo):
         """Registers a new user"""
         pass
 
-    async def fetchProfile():
+    async def exists(self, uid: int) -> bool:
+        return bool(
+            await self.run(query=UserQ.EXISTS(uid=uid), op=db.DBOP.FetchFirst)
+        )
+
+    async def getProfile():
         """Fetches an user profile"""
         pass
 
@@ -54,13 +61,24 @@ class ChatRepo(BaseRepo):
     ):
         pass
 
-    async def fetchAmount(self, user: User):
-        return await self.run(
-            query=UserQ.TOTAL_CHATS(uid=user.uid),
+    async def getChatAmount(self, uid: int):
+        result = await self.run(
+            query=UserQ.TOTAL_CHATS(uid=uid),
             op=db.DBOP.FetchFirst
         )
+        if isinstance(result, asyncpg.Record):
+            return result['count']
+        return result
 
-    async def fetchChatsMembers(self, chat_ids: List[int]) -> Dict[int, List[int]]:
+    async def getChats(self, uid):
+        return await self.run(
+            query=ChatQ.GET_ALL_CHATS(
+                uid=uid
+            ),
+            op=db.DBOP.Fetch
+        )
+
+    async def getChatsMembers(self, chat_ids: List[int]) -> Dict[int, List[int]]:
 
         members = await self.run(
             query=ChatQ.GET_MEMBERS(
@@ -81,11 +99,17 @@ class ChatRepo(BaseRepo):
 
         return members_dict
 
-    async def fetchChatMembers(self, chat_id: int) -> List[int]:
-        members = await self.fetchChatsMembers([chat_id])
+    async def getChatMembers(self, chat_id: int) -> List[int]:
+        members = await self.getChatsMembers([chat_id])
         return members.get(chat_id, list())
 
-    async def fetchChatMessages(
+    async def getChatFromMembers(self, members: List[int]):
+        return await self.run(
+            query=ChatQ.GET_CHAT_FROM_MEMBERS(members=sorted(members)),
+            op=db.DBOP.FetchFirst
+        )
+
+    async def getChatMessages(
         self,
         chat_id: int,
         offset: int,
@@ -119,4 +143,35 @@ class MessageRepo(BaseRepo):
                 content=msg.content
             ),
             op=db.DBOP.FetchFirst
+        )
+
+
+class NoticeRepo(BaseRepo):
+    def __init__(self, *a, **kw):
+        super().__init__(*a, **kw)
+
+    async def getWhere(self, author: int, target: int):
+        return await self.run(
+            query=NoticeQ.GET_WHERE_AUTHOR_AND_TARGET(
+                author=author, target=target),
+            op=db.DBOP.Fetch
+        )
+
+    async def existsWhere(self, author: int, target: int):
+        return bool(await self.getWhere(author, target))
+
+    async def existsNotice(self, notice_id: int):
+        pass
+
+    async def insertNotice(self, notice: Notice):
+        return await self.run(
+            NoticeQ.INSERT(
+                author=notice.author,
+                target=notice.target,
+                event=notice.event,
+                title=notice.title,
+                body=notice.body,
+                data=notice.data
+            ),
+            op=db.DBOP.Execute
         )

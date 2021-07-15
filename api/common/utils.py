@@ -1,4 +1,5 @@
 import os
+from pydantic import BaseSettings
 
 from dotenv import load_dotenv
 
@@ -53,6 +54,7 @@ SERVER_IP = os.getenv('SERVER_HOST')
 SERVER_PORT = int(os.getenv('SERVER_PORT'))
 SERVER_PROTOCOL = 'http'
 SERVER_URL = f'{SERVER_PROTOCOL}://{SERVER_IP}:{SERVER_PORT}'
+SYSTEM_UID = 0
 
 
 ENCODING = 'utf-8'

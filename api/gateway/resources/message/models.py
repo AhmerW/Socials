@@ -1,4 +1,5 @@
-from typing import List, Optional
+import time
+from typing import Any, Dict, List, Optional
 from pydantic import BaseModel
 
 
@@ -12,3 +13,13 @@ class Message(BaseModel):
 
     class Config:
         anystr_strip_whitespace = True
+
+
+def constructMessage(message: Dict[str, Any], **kwargs) -> dict:
+
+    return {
+        'created_at': int(time.time()),
+        'replies': [],
+        **message,
+        **kwargs
+    }

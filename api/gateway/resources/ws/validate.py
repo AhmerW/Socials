@@ -17,7 +17,6 @@ async def getClientSession() -> ClientSession:
 
 
 async def validateConnection(ws: WebSocket, ott: str) -> Union[bool, Dict]:
-    session = await getClientSession()
     token = ws.headers.get('Authorization')
     if token is None:
         return False
@@ -28,7 +27,7 @@ async def validateConnection(ws: WebSocket, ott: str) -> Union[bool, Dict]:
 
     return response
 
-    async with session.get(
+"""     async with session.get(
         f'{SERVER_URL}/ott/verify?ott={ott}',
         headers={'Authorization': token}
     ) as response:
@@ -36,7 +35,7 @@ async def validateConnection(ws: WebSocket, ott: str) -> Union[bool, Dict]:
         if not resp.get('ok'):
             return False
 
-        return resp
+        return resp """
 
 
 def decodeValue(value, default=None):

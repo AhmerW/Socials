@@ -45,17 +45,15 @@ async def start():
         value_deserializer=deserializer
     )
     await consumer.start()
-    consumer.client.subscribe(pattern='^user.*')
+    consumer.client.subscribe(pattern='ws.event.new')
 
     async for msg in consumer.client:
         transfer_data = msg.value.get(TD_KEY)
         if transfer_data is None:
             continue
         data = clients.get(
-            transfer_data.get(
-                'target',
-                dict()
-            ).get('uid')
+            transfer_data.get('target')
+
         )
         del msg.value[TD_KEY]
         if data:

@@ -13,7 +13,7 @@ class CacheClient():
         return self._con
 
     @classmethod
-    async def create(cls, *args, **kwargs) -> aioredis.Redis:
+    async def create(cls, *args, **kwargs) -> 'CacheClient':
         return CacheClient(
             await aioredis.create_redis_pool(
                 *args,

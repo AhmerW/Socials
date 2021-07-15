@@ -94,6 +94,7 @@ class UserQ(metaclass=_QueryCreator):
     FROM_USERNAME = "SELECT * FROM public.users WHERE username=$username"
     FROM_EMAIL = "SELECT email FROM public.users WHERE email=$email"
     FROM_USERNAME_OR_EMAIL = "SELECT email, username FROM public.users WHERE email = $email OR username = $username"
+    EXISTS = "SELECT uid from public.users where uid=$uid"
 
     VERIFY = "UPDATE users SET verified=TRUE where uid=$uid"
 
@@ -106,8 +107,6 @@ class UserQ(metaclass=_QueryCreator):
     TOTAL_CHATS = """
     SELECT COUNT(*) from chat.chat_members where chat.chat_members.chat_member_uid = $uid
     """
-
-# Large queries have beeen formatted using online sql-query formatters
 
 
 class AccountQ(metaclass=_QueryCreator):
@@ -202,6 +201,42 @@ class ChatQ(metaclass=_QueryCreator):
         FROM   finalize; 
     """
 
+    GET_CHAT_FROM_MEMBERS = """
+        WITH chats AS
+        (
+            SELECT chat.chat_id,
+                    chat.chat_name,
+                    chat.chat_pfp
+            FROM   chat.chat_members AS members
+            join   chat.chats        AS chat
+            ON     chat.chat_id = members.chat_id
+            WHERE  members.chat_member_uid = 3 ), chat_members AS
+        (
+                SELECT   chats.chat_id,
+                        chats.chat_name,
+                        chats.chat_pfp,
+                        Array_agg(cm.chat_member_uid) AS members
+                FROM     chats
+                join     chat.chat_members AS cm
+                ON       cm.chat_id = chats.chat_id
+                GROUP BY chats.chat_id,
+                        chats.chat_name,
+                        chats.chat_pfp ), finalize AS
+        (
+                SELECT   chat.chat_name,
+                        chat.members,
+                        chat.chat_id,
+                        chat.chat_pfp
+                FROM     chat_members AS chat
+                GROUP BY chat.chat_name,
+                        chat.chat_pfp,
+                        chat.chat_id,
+                        chat.members )
+        SELECT *
+        FROM   finalize
+        where members = $members;
+            """
+
     GET_MEMBERS = """
         SELECT PROFILE.PFP,
             PROFILE.DISPLAY_NAME,
@@ -268,3 +303,32 @@ class MessageQ(metaclass=_QueryCreator):
 
     GET_MESSAGE_REPLIES = """
     """
+
+
+class NoticeQ(metaclass=_QueryCreator):
+    GET_WHERE_AUTHOR_AND_TARGET = \
+        """
+        SELECT * from notices WHERE notice_author = $author AND notice_target = $target;
+        """
+
+    INSERT = \
+        """
+        INSERT INTO 
+            notices(
+                notice_author,
+                notice_target,
+                notice_event,
+                notice_title,
+                notice_body,
+                notice_data
+            )
+            
+            VALUES (
+                $author,
+                $target,
+                $event,
+                $title,
+                $body,
+                $data
+            )
+        """

@@ -17,7 +17,7 @@ from common.internal.limits import INTERNAL_USERNAME_PREFIX
 
 from gateway import ctx
 from gateway.core.auth.auth_jwt import ENCODED_SECRET_KEY, TokenType, createNewToken, decodeToken, verifyRefreshToken
-from gateway.core.models import DeviceIDModel, TokenModel, User
+from gateway.core.models import TokenModel, User
 from common.response import Success, Responses
 from common.errors import Error, Errors
 from common.data.local import db

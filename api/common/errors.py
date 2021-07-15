@@ -10,6 +10,7 @@ class Errors(Enum):
     UNAUTHORIZED = auto()
     LIMIT_EXCEEDED = auto()
     VALIDATION_ERROR = auto()
+    EXISTING = auto()
 
     INVALID_ARGUMENTS = auto()
     INVALID_EMAIL = auto()
@@ -43,7 +44,7 @@ class Error(Exception):
         }
 
 
-@app.exception_handler(Error)
+@ app.exception_handler(Error)
 async def Error_handler(request: Request, exc: Error):
     return JSONResponse(
         status_code=exc.status,
@@ -58,7 +59,7 @@ async def Error_handler(request: Request, exc: Error):
     )
 
 
-@app.exception_handler(RequestValidationError)
+@ app.exception_handler(RequestValidationError)
 async def RequestValidationError_handler(request: Request, exc):
     return JSONResponse(
         status_code=400,

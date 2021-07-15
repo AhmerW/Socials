@@ -92,7 +92,7 @@ def createNewToken(
     )
 
 
-def verifyRefreshToken(token: str, unique: bytes) -> Union[None, Tuple[bool, str]]:
+def verifyRefreshToken(token: str, unique: str) -> Union[None, Tuple[bool, str]]:
     payload = decodeToken(token, default=dict())
     if payload is None or payload.get('unique') is None:
         return False, 'Invalid data'

@@ -1,7 +1,5 @@
-from typing import Optional
+from typing import Any, Dict, Optional
 from pydantic import BaseModel
-
-from common.response import Success
 
 
 class User(BaseModel):
@@ -12,9 +10,33 @@ class User(BaseModel):
     premium: Optional[bool] = False
 
 
+class NoticeInsert(BaseModel):
+    author: int
+    target: int
+    event: str
+    title: Optional[str] = None,
+    body: Optional[str] = None,
+    data: Optional[Dict[str, Any]] = None
+
+
+# Single item models
+
+
+class NoticeModel(BaseModel):
+    notice_id: int
+
+
 class TokenModel(BaseModel):
     token: str
 
 
-class DeviceIDModel(BaseModel):
+class DeviceModel(BaseModel):
     device_id: str
+
+
+class SingleUsernameModel(BaseModel):
+    username: str
+
+
+class SingleUidModel(BaseModel):
+    uid: int

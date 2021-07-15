@@ -1,40 +1,59 @@
 
 
 from typing import Any, Dict
+
 from common.data.ext.app.status import Status
+from common.data.ext.cache_client import CacheClient
+from common.data.ext.event import Event, Notice
 from common.data.ext.mq_manager import MQManager
+from common.utils import SYSTEM_UID
 from gateway import ctx
+from gateway.core.models import NoticeInsert
+from gateway.core.repo.repos import NoticeRepo
 
 retries = []
 
 
-def retry(event, event_data):
+def retry(event: Event):
     # TODO: implement retry system
-    print("[ERROR] retrying... ", event_data)
+    print("[ERROR] retrying... ", event.event())
 
 
-async def sendNotice(target, info):
-    print('sending notice to: ', target)
+async def sendNotice(notice: Notice):
+    print('sending notice to: ', notice.target)
 
 
-async def pushEvent(event: str, event_data: Dict[str, Any], producer=None, cache=None):
+async def pushEvent(
+        event: Event,
+        producer: MQManager = None,
+        cache: CacheClient = None) -> None:
+
+    if event.target == SYSTEM_UID:
+        return
+
     if producer is None:
         producer = ctx.producer
 
     if cache is None:
         cache = ctx.user_cache
 
-    try:
-        transfer_data = event_data.get('transfer_data')
-        target = transfer_data.get('target', dict()).get('uid')
-        if target is None:
-            return retry(event, event_data)
-    except KeyError:
-        return None
-
-    status = await ctx.user_cache.con.con.exists(target)
+    status = await cache.con.exists(event.target)
     if not status:  # is offline
-        return await sendNotice(target, status)
+        if not event.hasNotice():
+            # Events which require user interaction to proceed, or which has a target
+            # will include a Notice. This is not the case for events which will later
+            # be fetched upon client login. One example with this are: chat messages.
+            return
 
-    print(f"{target} is online, dipatching event")
-    return await producer.send(event, event_data)
+        notice = event.getNotice()
+        if notice.save and notice.author != notice.target:
+            async with NoticeRepo() as repo:
+                try:
+                    await repo.insertNotice(notice)
+                except Exception:
+                    print("notice not inserted")
+
+        return await sendNotice(notice)
+
+    print(f"{event.target} online, dispatching event")
+    await producer.send('ws.event.new', event.getData())
