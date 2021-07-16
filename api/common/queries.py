@@ -310,6 +310,10 @@ class NoticeQ(metaclass=_QueryCreator):
         """
         SELECT * from notices WHERE notice_author = $author AND notice_target = $target;
         """
+    DELETE_WHERE_AUTHOR_AND_TARGET =\
+        """
+        DELETE FROM notices WHERE notice_author = $author and notice_target = $target;
+        """
 
     INSERT = \
         """

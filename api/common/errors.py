@@ -7,6 +7,7 @@ from gateway.ctx import app
 
 
 class Errors(Enum):
+    INTERNAL = auto()
     UNAUTHORIZED = auto()
     LIMIT_EXCEEDED = auto()
     VALIDATION_ERROR = auto()

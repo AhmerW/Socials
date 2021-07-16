@@ -31,7 +31,7 @@ def _format_token(token, as_header=False):
 
 @pytest.mark.skip()
 class TestUser:
-    username = 'test'
+    username = 'admin'
     password = 'pass'
 
     __cached = {}
@@ -43,8 +43,9 @@ class TestUser:
             return _format_token(_existing, header)
         token = client.request(
             'post',
-            '/auth/token',
-            data={'username': cls.username, 'password': cls.password}
+            '/auth/login',
+            data={'username': cls.username,
+                  'password': cls.password, 'device_id': 'tests'}
         ).json().get('data', dict()).get('access_token')
         cls.__cached[cls.username] = token
         return _format_token(token, header)

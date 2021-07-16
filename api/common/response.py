@@ -27,6 +27,7 @@ class Responses:
 
     _F suffix -> Formattable response
     """
+    SUCCESS = 'Success'
     ACCOUNT_VERIFIED = 'Your account is verified.'
 
     REGISTRATION_COMPLTE = 'Your account has succesfully been registered at Socials.'

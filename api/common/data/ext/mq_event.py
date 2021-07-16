@@ -50,10 +50,9 @@ async def pushEvent(
             async with NoticeRepo() as repo:
                 try:
                     await repo.insertNotice(notice)
-                except Exception:
-                    print("notice not inserted")
+                except Exception as e:
+                    raise e
 
         return await sendNotice(notice)
 
-    print(f"{event.target} online, dispatching event")
     await producer.send('ws.event.new', event.getData())

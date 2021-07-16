@@ -1,5 +1,6 @@
 
 
+import json
 from typing import Any, Dict, List
 import asyncpg
 from asyncpg.connection import Connection
@@ -7,7 +8,7 @@ from common.data.ext.event import Notice
 from gateway import ctx
 
 from gateway.core.repo.base import BaseRepo
-from gateway.core.models import NoticeInsert, User
+from gateway.core.models import User
 
 
 from common.data.local import db
@@ -160,18 +161,26 @@ class NoticeRepo(BaseRepo):
     async def existsWhere(self, author: int, target: int):
         return bool(await self.getWhere(author, target))
 
+    async def deleteWhere(self, author: int, target: int):
+        return await self.run(
+            NoticeQ.DELETE_WHERE_AUTHOR_AND_TARGET(
+                author=author, target=target),
+            op=db.DBOP.FetchFirst
+        )
+
     async def existsNotice(self, notice_id: int):
         pass
 
     async def insertNotice(self, notice: Notice):
+        print("notice inserted")
         return await self.run(
             NoticeQ.INSERT(
                 author=notice.author,
                 target=notice.target,
                 event=notice.event,
-                title=notice.title,
-                body=notice.body,
-                data=notice.data
+                title=notice.options.get('title'),
+                body=notice.options.get('body'),
+                data=json.dumps(notice.data) if notice.data else None
             ),
             op=db.DBOP.Execute
         )
