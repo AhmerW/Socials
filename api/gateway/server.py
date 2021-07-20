@@ -5,9 +5,10 @@ from common.utils import SVC_DISPATCH_IS_EXT
 
 from gateway.resources.ws import routes as ws_routes
 from gateway.resources.ott import routes as ott_routes
-from gateway.resources.user import routes as user_routes
-from gateway.resources.chat import routes as chat_routes
-from gateway.resources.message import routes as msg_routes
+from gateway.resources.users import routes as user_routes
+from gateway.resources.chats import routes as chat_routes
+from gateway.resources.messages import routes as msg_routes
+from gateway.resources.notices import routes as notice_routes
 from gateway.resources.account import routes as account_routes
 
 from common.response import ResponseModel, Success
@@ -38,12 +39,13 @@ async def test_endpoint():
 # dependencies = [] arg
 
 routers = {
+    'auth': auth,
     'ott': ott_routes,
-    'user': user_routes,
-    'chat': chat_routes,
-    'message': msg_routes,
+    'users': user_routes,
+    'chats': chat_routes,
+    'messages': msg_routes,
+    'notices': notice_routes,
     'account': account_routes,
-    'auth': auth
 }
 
 for prefix, routes in routers.items():

@@ -31,7 +31,7 @@ load_dotenv('.env')
 pwd_ctx = ctx.pwd_ctx
 
 oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl='/token'
+    tokenUrl='/auth/login'
 )
 
 credentials_exception = Error(

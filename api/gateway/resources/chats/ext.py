@@ -1,6 +1,6 @@
 from common.errors import Error, Errors
 from common.response import Responses
-from gateway.resources.chat.chat_const import MAX_CHATS_PREMIUM, MAX_CHATS_STANDARD
+from gateway.resources.chats.chat_const import MAX_CHATS_PREMIUM, MAX_CHATS_STANDARD
 
 
 def getChatLimitExceededError(is_premium):

@@ -8,6 +8,8 @@ from common.data.ext.cache_client import CacheClient
 from common.data.ext.config import DEFAULT_CONF
 from common.data.ext.email_service import EmailService
 from common.data.ext.mq_manager import MQManager
+from common.response import SuccessResponse
+from common.utils import IS_DEV
 
 PROJECT_NAME = 'Socials'
 
@@ -41,12 +43,18 @@ email_service = EmailService(
     incl_name='Socials'
 )
 
+_defaults = dict(openapi_url=None, redoc_url=None, docs_url=None)
+
+if IS_DEV:
+    _defaults = dict(
+        docs_url='/documentation',
+        openapi_url='/openapi.json'
+    )
 
 app = FastAPI(
     title=PROJECT_NAME,
-    openapi_url=None,
-    redoc_url=None,
-    docs_url=None,
+    default_response_class=SuccessResponse,
+    **_defaults
 )
 
 app.add_middleware(

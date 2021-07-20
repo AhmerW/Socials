@@ -9,10 +9,10 @@ from gateway.core.auth.auth import getUser
 
 from gateway.core.models import SingleUidModel, User
 from gateway.core.repo.repos import ChatRepo, NoticeRepo, UserRepo
-from gateway.resources.chat.ext import getChatLimitExceededError, isMaxChatAmount
+from gateway.resources.chats.ext import getChatLimitExceededError, isMaxChatAmount
 
 
-router = APIRouter(prefix='/invite')
+router = APIRouter(prefix='/invites')
 
 
 @ router.post('/')

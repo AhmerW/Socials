@@ -1,17 +1,18 @@
+from typing import Optional
 from fastapi import APIRouter, Depends
-from common.data.ext.event import Event, NewNotice, Notice
+from common.data.ext.event import Event, NewNotice
 from common.data.ext.mq_event import pushEvent
 
 from gateway import ctx
 from gateway.core.auth.auth import getUser
 from gateway.core.models import User
-from gateway.core.repo.repos import MessageRepo
-from gateway.resources.message.ext import getChatMembers
-from gateway.resources.message.models import Message, constructMessage, constructMessage
+from gateway.core.repo.repos import ChatRepo, MessageRepo
+from gateway.resources.messages.ext import getChatMembers
+from gateway.resources.messages.models import Message, constructMessage, constructMessage
 
-from common.response import Success, Responses
+from common.response import Success
 from common.errors import Error, Errors
-from gateway.resources.message.validation import validateChatMessage
+from gateway.resources.messages.validation import validateChatMessage
 
 router = APIRouter()
 
@@ -21,8 +22,29 @@ async def insertChatMessage(user: User, msg: Message):
         await repo.insertChatMessage(msg)
 
 
-@router.post('/send')
-async def messageSend(
+@router.get('/{message_id}')
+async def getMessages(
+    message_id: int,
+    _: User = Depends(getUser)
+):
+    message = ''
+    async with MessageRepo() as repo:
+        pass
+    return Success('', {'message': message})
+
+
+@router.delete('/{message_id}')
+async def deleteMessage(
+    message_id: int,
+    _: User = Depends(getUser)
+):
+    async with MessageRepo() as repo:
+        pass
+    return Success('')
+
+
+@router.post('/')
+async def postMessage(
     msg: Message,
     user: User = Depends(getUser),
 ):

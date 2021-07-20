@@ -14,8 +14,8 @@ from gateway.core.models import User
 from common.data.local import db
 from common.queries import ChatQ, MessageQ, NoticeQ, UserQ
 from gateway.resources.account.ext.tasks import initVerification
-from gateway.resources.chat.models import Chat, ChatCreateModel
-from gateway.resources.message.models import Message
+from gateway.resources.chats.models import Chat, ChatCreateModel
+from gateway.resources.messages.models import Message
 
 
 class UserRepo(BaseRepo):
@@ -60,9 +60,14 @@ class ChatRepo(BaseRepo):
         user: User,
         data: ChatCreateModel
     ):
-        pass
+        """
+        Create a new chat for user.
+        """
 
     async def getChatAmount(self, uid: int):
+        """
+        Get the amount of chats a User have.
+        """
         result = await self.run(
             query=UserQ.TOTAL_CHATS(uid=uid),
             op=db.DBOP.FetchFirst
@@ -71,7 +76,10 @@ class ChatRepo(BaseRepo):
             return result['count']
         return result
 
-    async def getChats(self, uid):
+    async def getChats(self, uid: int):
+        """
+        Get a List of all chat's belonging to a User.
+        """
         return await self.run(
             query=ChatQ.GET_ALL_CHATS(
                 uid=uid
@@ -79,10 +87,21 @@ class ChatRepo(BaseRepo):
             op=db.DBOP.Fetch
         )
 
-    async def getChatsMembers(self, chat_ids: List[int]) -> Dict[int, List[int]]:
+    async def getChatWhereID(self, chat_id: int, uid: int):
+        """
+        Get a Chat when you know it's ID
+        """
+        return self.run(
+            query=ChatQ.GET_CHAT_WHERE_ID(chat_id=chat_id, uid=uid),
+            op=db.DBOP.FetchFirst
+        )
 
+    async def getChatsMembers(self, chat_ids: List[int]) -> Dict[int, List[int]]:
+        """
+        Get a dictionary mapping a chat id to a list of it's members
+        """
         members = await self.run(
-            query=ChatQ.GET_MEMBERS(
+            query=ChatQ.GET_CHAT_MEMBERS(
                 chats=chat_ids
             ),
             op=db.DBOP.Fetch
@@ -101,10 +120,26 @@ class ChatRepo(BaseRepo):
         return members_dict
 
     async def getChatMembers(self, chat_id: int) -> List[int]:
+        """
+        Get a Chat's members
+        """
         members = await self.getChatsMembers([chat_id])
         return members.get(chat_id, list())
 
+    async def getChatMemberFromUID(self, uid: int, chat_id: int):
+        """
+        Returns the user from chat.chat_members.
+        Useful for checking if the user is a participant of the chat
+        """
+        return await self.run(
+            query=ChatQ.FROM_CHAT_MEMBERS_WHERE_UID(uid=uid, chat_id=chat_id),
+            op=db.DBOP.FetchFirst
+        )
+
     async def getChatFromMembers(self, members: List[int]):
+        """
+        Get a chat where you know who the members are
+        """
         return await self.run(
             query=ChatQ.GET_CHAT_FROM_MEMBERS(members=sorted(members)),
             op=db.DBOP.FetchFirst
@@ -115,16 +150,15 @@ class ChatRepo(BaseRepo):
         chat_id: int,
         offset: int,
         amount: int,
-        reply_offset: int,
-        replies: int
     ) -> List[Dict[str, Any]]:
+        """
+        Get a List of chat's messages
+        """
         return await self.run(
-            query=ChatQ.FETCH_MESSAGES(
+            query=ChatQ.GET_MESSAGES(
                 chat_id=chat_id,
                 offset=offset,
-                amount=amount,
-                reply_offset=reply_offset,
-                replies=replies
+                amount=amount
             ),
             op=db.DBOP.Fetch
         )
@@ -155,6 +189,13 @@ class NoticeRepo(BaseRepo):
         return await self.run(
             query=NoticeQ.GET_WHERE_AUTHOR_AND_TARGET(
                 author=author, target=target),
+            op=db.DBOP.Fetch
+        )
+
+    async def getWhereTarget(self, target: int, offset: int, limit: int):
+        return await self.run(
+            query=NoticeQ.GET_WHERE_TARGET(
+                target=target, offset=offset, limit=limit),
             op=db.DBOP.Fetch
         )
 

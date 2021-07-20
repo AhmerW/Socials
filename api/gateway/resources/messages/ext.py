@@ -3,9 +3,9 @@ import json
 from common.data.ext.cache_client import CacheClient
 from gateway import ctx
 from gateway.core.repo.repos import ChatRepo
-from gateway.resources.chat import chat_cache
+from gateway.resources.chats import chat_cache
 
-from gateway.resources.chat.models import Chat
+from gateway.resources.chats.models import Chat
 
 
 async def getChatMembers(chat_id: int):

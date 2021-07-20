@@ -56,6 +56,8 @@ SERVER_PROTOCOL = 'http'
 SERVER_URL = f'{SERVER_PROTOCOL}://{SERVER_IP}:{SERVER_PORT}'
 SYSTEM_UID = 0
 
+IS_DEV = True  # Is development
+
 
 ENCODING = 'utf-8'
 SECRET_KEY = os.getenv('SERVER_AUTH_SKEY')

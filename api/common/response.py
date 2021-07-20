@@ -3,8 +3,6 @@ from typing import Any, Dict, Union
 from fastapi.responses import JSONResponse
 from pydantic.main import BaseModel
 
-from common.errors import Error
-
 
 class ResponseModel(BaseModel):
     """
@@ -58,3 +56,17 @@ def Success(detail, data={}, status=200):
             'data': data
         }
     )
+
+
+class SuccessResponse(JSONResponse):
+    def __init__(self, detail, data={}, status=200):
+        super().__init__(
+            status_code=200,
+            content={
+                'ok': True,
+                'status': status,
+                'error': {},
+                'detail': detail,
+                'data': data
+            }
+        )

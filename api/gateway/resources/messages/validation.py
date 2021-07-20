@@ -1,5 +1,5 @@
-from gateway.resources.message.models import Message
-from gateway.resources.chat.chat_const import MAX_CHAT_MESSAGE_LEN
+from gateway.resources.messages.models import Message
+from gateway.resources.chats.chat_const import MAX_CHAT_MESSAGE_LEN
 
 
 def validateChatMessage(msg: Message) -> bool:

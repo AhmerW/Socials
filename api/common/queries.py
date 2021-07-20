@@ -29,7 +29,11 @@ class Query():
             if ci is not None and cw is not None:
                 if i+1 == len(self._q):
                     # end
-                    kwargs.append(self._q[ci:i+1])
+                    c = self._q[ci:i+1]
+                    if c.endswith(';'):
+                        c = c[0:-1]
+
+                    kwargs.append(c)
                 elif not self._q[i].strip() or self._q[i] in (
                     # EOLs
                     ',',
@@ -158,7 +162,7 @@ class ChatQ(metaclass=_QueryCreator):
     # Get all chats of an user, including the chat's members as List<int>
     # Chat's profile picture is the member's profile picture
     # if the amount of members = 1 (2 people conversation, not a group-chat)
-    GET_ALL_CHATS = """
+    DEFAULT_GET_CHATS = """
         WITH chats AS
         (
             SELECT chat.chat_id,
@@ -167,7 +171,7 @@ class ChatQ(metaclass=_QueryCreator):
             FROM   chat.chat_members AS members
             join   chat.chats        AS chat
             ON     chat.chat_id = members.chat_id
-            WHERE  members.chat_member_uid = $uid ), chat_members AS
+            WHERE {optional_where} members.chat_member_uid = $uid ), chat_members AS
         (
                 SELECT   chats.chat_id,
                         chats.chat_name,
@@ -200,6 +204,9 @@ class ChatQ(metaclass=_QueryCreator):
         SELECT *
         FROM   finalize; 
     """
+    GET_ALL_CHATS = DEFAULT_GET_CHATS.format(optional_where='')
+    GET_CHAT_WHERE_ID = DEFAULT_GET_CHATS.format(
+        optional_where='chat.chat_id = $chat_id AND')
 
     GET_CHAT_FROM_MEMBERS = """
         WITH chats AS
@@ -237,7 +244,7 @@ class ChatQ(metaclass=_QueryCreator):
         where members = $members;
             """
 
-    GET_MEMBERS = """
+    GET_CHAT_MEMBERS = """
         SELECT PROFILE.PFP,
             PROFILE.DISPLAY_NAME,
             USERS.USERNAME,
@@ -249,7 +256,12 @@ class ChatQ(metaclass=_QueryCreator):
         WHERE CM.CHAT_ID = ANY ($chats)
     """
 
-    FETCH_MESSAGES = \
+    FROM_CHAT_MEMBERS_WHERE_UID = \
+        """
+        SELECT * from chat.chat_members as cm where cm.chat_member_uid = $uid and cm.chat_id = $chat_id;
+        """
+
+    __OLD__GET_MESSAGES = \
         """
         SELECT
         CM.MESSAGE_ID,
@@ -284,6 +296,40 @@ class ChatQ(metaclass=_QueryCreator):
 
         """
 
+    GET_MESSAGES = \
+        """
+        SELECT 
+        CM.MESSAGE_ID, 
+        CM.CHAT_MESSAGE_AUTHOR AS AUTHOR_ID, 
+        CM.CHAT_MESSAGE_CONTENT AS CONTENT, 
+        CM.CHAT_MESSAGE_CREATED_AT AS CREATED_AT, 
+        CASE WHEN CM.CHAT_MESSAGE_PARENT_ID != NULL THEN (
+            SELECT 
+            ROW(
+                MSG.MESSAGE_ID, MSG.CHAT_MESSAGE_AUTHOR, 
+                up.pfp, MSG.CHAT_MESSAGE_CONTENT
+            ) 
+            FROM 
+            CHAT.CHAT_MESSAGES AS MSG 
+            JOIN USER_profiles as up on up.uid = MSG.CHAT_MESSAGE_AUTHOR 
+            WHERE 
+            MSG.MESSAGE_ID = CM.CHAT_MESSAGE_PARENT_ID 
+            LIMIT 
+            1
+        ) ELSE ROW() END REPLY_TO 
+        FROM 
+        CHAT.CHAT_MESSAGES AS CM 
+        WHERE 
+        CM.CHAT_MESSAGE_CHAT_ID = $chat_id
+        ORDER BY 
+        CM.MESSAGE_ID DESC 
+        OFFSET $offset
+        LIMIT 
+        $amount;
+
+
+        """
+
 
 class MessageQ(metaclass=_QueryCreator):
     INSERT = """
@@ -301,15 +347,18 @@ class MessageQ(metaclass=_QueryCreator):
     RETURNING chat.chat_messages.message_id;
     """
 
-    GET_MESSAGE_REPLIES = """
-    """
-
 
 class NoticeQ(metaclass=_QueryCreator):
     GET_WHERE_AUTHOR_AND_TARGET = \
         """
         SELECT * from notices WHERE notice_author = $author AND notice_target = $target;
         """
+
+    GET_WHERE_TARGET = \
+        """
+        SELECT * FROM notices WHERE notice_target = $target OFFSET $offset LIMIT $limit;
+        """
+
     DELETE_WHERE_AUTHOR_AND_TARGET =\
         """
         DELETE FROM notices WHERE notice_author = $author and notice_target = $target;
