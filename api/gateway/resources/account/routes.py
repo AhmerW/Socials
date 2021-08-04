@@ -31,7 +31,9 @@ from gateway.resources.account.ext.tasks import (
 from common.response import ResponseModel, Success, Responses
 from common.errors import Error, Errors
 from common.data.local.db import DBOP
-from common.queries import UserQ, AccountQ
+from common.data.local.queries.account_q import AccountQ
+from common.data.local.queries.user_q import UserQ
+
 
 router = APIRouter()
 

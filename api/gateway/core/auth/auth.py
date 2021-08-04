@@ -21,7 +21,8 @@ from gateway.core.models import TokenModel, User
 from common.response import Success, Responses
 from common.errors import Error, Errors
 from common.data.local import db
-from common.queries import Query, UserQ
+from common.data.local.queries.query import Query
+from common.data.local.queries.user_q import UserQ
 from common.utils import *
 
 router = APIRouter()
@@ -116,13 +117,16 @@ async def _checkIsInternal(username: str, base: User = None):
 
 # Routes
 
-@ router.post('/login')
+@ router.post(
+    '/login',
+    tags=['Authorization']
+)
 async def authenticateUser(
     device_id: str = Form(...),
     form: OAuth2PasswordRequestForm = Depends(),
     base: Optional[User] = Depends(OptionalUser)
 ):
-    """/auth/login endpoint. Creates a jwt token for the user if refresh toen is correct"""
+    """/auth/login, creates a new access and refresh token."""
 
     await _checkIsInternal(form.username, base=base)
 
@@ -157,7 +161,10 @@ class RefreshTokenModel(TokenModel):
     device_id: str
 
 
-@ router.post('/refresh')
+@ router.post(
+    '/refresh',
+    tags=['Authorization']
+)
 async def refreshToken(
     token: RefreshTokenModel
 ):

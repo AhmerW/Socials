@@ -5,6 +5,7 @@ from typing import Any, Dict, List
 import asyncpg
 from asyncpg.connection import Connection
 from common.data.ext.event import Notice
+from common.data.local.queries.query import Query
 from gateway import ctx
 
 from gateway.core.repo.base import BaseRepo
@@ -12,7 +13,11 @@ from gateway.core.models import User
 
 
 from common.data.local import db
-from common.queries import ChatQ, MessageQ, NoticeQ, UserQ
+from common.data.local.queries.chat_q import ChatQ
+from common.data.local.queries.notice_q import NoticeQ
+from common.data.local.queries.message_q import MessageQ
+from common.data.local.queries.user_q import UserQ
+
 from gateway.resources.account.ext.tasks import initVerification
 from gateway.resources.chats.models import Chat, ChatCreateModel
 from gateway.resources.messages.models import Message
@@ -32,9 +37,12 @@ class UserRepo(BaseRepo):
             await self.run(query=UserQ.EXISTS(uid=uid), op=db.DBOP.FetchFirst)
         )
 
-    async def getProfile():
+    async def getProfile(self, user_id: int):
         """Fetches an user profile"""
-        pass
+        return await self.run(
+            query=UserQ.PROFILE_FROM_UID(uid=user_id),
+            op=db.DBOP.FetchFirst
+        )
 
     async def verify(self):
         """Makes the user verified"""
@@ -150,15 +158,18 @@ class ChatRepo(BaseRepo):
         chat_id: int,
         offset: int,
         amount: int,
+        order: str = 'DESC'  # asc
     ) -> List[Dict[str, Any]]:
         """
         Get a List of chat's messages
         """
+        query = ChatQ.GET_CHAT_MESSAGES.query.format(
+            order=order, chat_id='{chat_id}', offset='{offset}', amount='{amount}')
         return await self.run(
-            query=ChatQ.GET_MESSAGES(
+            query=Query(query).format(
                 chat_id=chat_id,
                 offset=offset,
-                amount=amount
+                amount=amount,
             ),
             op=db.DBOP.Fetch
         )

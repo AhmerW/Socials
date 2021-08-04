@@ -1,14 +1,11 @@
 
+from gateway.core.repo.repos import ChatRepo
+from gateway.core.models import User
+from gateway.core.auth.auth import getUser
+from gateway import ctx
+from common.response import Success
 from fastapi import APIRouter, Depends
 from common.errors import Error, Errors
-
-
-from common.response import Success
-from gateway import ctx
-
-from gateway.core.auth.auth import getUser
-from gateway.core.models import User
-from gateway.core.repo.repos import ChatRepo
 
 
 router = APIRouter()

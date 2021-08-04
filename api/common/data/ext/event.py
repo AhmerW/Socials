@@ -54,7 +54,6 @@ class Event:
         self.event, self.data = event, data
         self.author = author
         self.notice = notice
-        print(f"A: {author}, T: {target}, AT: {target or author}")
         self.target = target or author
         self.transfer_data = {'target': self.target, **opts}
 

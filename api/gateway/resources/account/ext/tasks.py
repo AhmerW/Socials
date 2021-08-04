@@ -3,7 +3,7 @@ from enum import Enum
 from fastapi import BackgroundTasks, FastAPI
 from common.internal.limits import INTERNAL_USERNAME_PREFIX, MAX_USERNAME_LEN
 
-from common.queries import UserQ
+
 from common.data.local.html import HTML
 from gateway import ctx
 from gateway.resources.account.ext import registrator

@@ -20,9 +20,13 @@ async def chatFetchMessages(
     chat_id: int,
     offset: Optional[int] = 0,
     amount: Optional[int] = 10,
+    order: Optional[str] = 'desc',
     user: User = Depends(getUser)
 ):
     messages: List[Dict[str, Any]] = list()
+
+    if len(order) > 4 or order.lower() not in ('desc', 'asc'):
+        raise Error(Errors.INVALID_ARGUMENTS, "Order must be 'desc' or 'asc'")
 
     async with ChatRepo() as repo:
 
@@ -32,6 +36,7 @@ async def chatFetchMessages(
         messages = await repo.getChatMessages(
             chat_id,
             offset,
-            amount
+            amount,
+            order=order
         )
     return Success('', {'messages': messages})

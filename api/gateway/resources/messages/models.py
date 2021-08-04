@@ -19,7 +19,7 @@ def constructMessage(message: Dict[str, Any], **kwargs) -> dict:
 
     return {
         'created_at': int(time.time()),
-        'replies': [],
+        'reply_to': "{}",
         **message,
         **kwargs
     }

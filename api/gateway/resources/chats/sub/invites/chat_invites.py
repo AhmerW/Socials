@@ -3,7 +3,6 @@ from fastapi.param_functions import Depends
 from common.data.ext.event import Event, NewNotice, Notice
 from common.data.ext.mq_event import pushEvent
 from common.errors import Error, Errors
-from common.queries import ChatQ
 from common.response import Responses, Success
 from gateway.core.auth.auth import getUser
 

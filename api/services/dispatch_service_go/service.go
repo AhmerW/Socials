@@ -22,7 +22,7 @@ func main() {
 		panic(err)
 	}
 
-	c.SubscribeTopics([]string{"user.message.new"}, nil)
+	c.SubscribeTopics([]string{"ws.event.new"}, nil)
 
 	for {
 		msg, err := c.ReadMessage(-1)

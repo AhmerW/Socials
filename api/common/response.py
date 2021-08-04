@@ -8,7 +8,7 @@ class ResponseModel(BaseModel):
     """
     The Response-model of all endpoints.
     Returned either as an excpetion (the commons.errors.Error function),
-    or as a Successful operation return, (common.responses.Success function)
+    or as a Successful operation return, (common.responses.SuccessResponse)
     """
     status: int
     ok: bool

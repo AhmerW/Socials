@@ -4,7 +4,7 @@ from collections.abc import Iterable
 import asyncpg
 from enum import Enum
 
-from common.queries import Query
+from common.data.local.queries.query import Query
 
 
 class DBOP(Enum):
@@ -19,16 +19,15 @@ async def _processQuery(
     query: Query,
     serialize: bool = True
 ):
+
     result = list()
     if operation == DBOP.Fetch:
         result = list(await con.fetch(*query))
 
     elif operation == DBOP.FetchFirst:
-        _res = await con.fetch(*query)
-        if len(_res) >= 1:
-            return _res[0]
-
-        result = _res
+        result = await con.fetchrow(*query)
+        if result is not None:
+            return dict(result)
 
     elif operation == DBOP.Execute:
         return await con.execute(*query)

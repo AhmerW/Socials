@@ -1,7 +1,6 @@
 from typing import Any, Dict, List
 from fastapi import APIRouter
 from fastapi.param_functions import Depends
-from common.queries import NoticeQ
 from common.response import Success
 
 from gateway.core.auth.auth import getUser
