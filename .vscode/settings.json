@@ -1,5 +1,4 @@
 {
-
     "python.testing.pytestArgs": [
         "tests"
     ],
@@ -10,7 +9,6 @@
     "python.analysis.extraPaths": [
         "${workspaceFolder}\\api"
     ],
-
-
-    
+    "python.formatting.provider": "black",
+    "editor.inlayHints.enabled": true
 }

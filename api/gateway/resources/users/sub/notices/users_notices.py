@@ -7,16 +7,14 @@ from common.response import Success
 from gateway.core.auth.auth import getUser
 from gateway.core.models import User
 
-from gateway.core.repo.repos import NoticeRepo
+from gateway.data.repos.repos import NoticeRepo
+
 router = APIRouter()
 
 
-@router.get('/{user_id}/notices')
+@router.get("/{user_id}/notices")
 async def getNotices(
-    user_id: int,
-    offset: int = 0,
-    limit: int = 10,
-    user: User = Depends(getUser)
+    user_id: int, offset: int = 0, limit: int = 10, user: User = Depends(getUser)
 ):
     if user_id != user.uid:
         raise Error(Errors.UNAUTHORIZED)
@@ -25,4 +23,4 @@ async def getNotices(
     async with NoticeRepo() as repo:
         notices = await repo.getWhereTarget(user.uid, offset, limit)
 
-    return Success('', dict(notices=notices))
+    return Success("", dict(notices=notices))

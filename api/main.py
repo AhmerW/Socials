@@ -1,15 +1,14 @@
-import uvicorn
-
-
 from gateway.server import app
-from common import utils
+
 
 app = app
 
-if __name__ == '__main__':
-    """
-    ONLY FOR DEVELOPMENT
-    """
+if __name__ == "__main__":
+    import uvicorn
+    from common.settings import DEV_SETTINGS
 
-    uvicorn.run("main:app", host=utils.SERVER_IP,
-                port=utils.SERVER_PORT, reload=True)
+    assert DEV_SETTINGS.IP.is_private
+
+    uvicorn.run(
+        "main:app", host=str(DEV_SETTINGS.IP), port=DEV_SETTINGS.PORT, reload=True
+    )

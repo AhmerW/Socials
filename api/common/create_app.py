@@ -2,7 +2,7 @@ import os
 import asyncpg
 
 
-async def createPool(*args, **kwargs):
+async def createPool(*, **kwargs):
     return await asyncpg.create_pool(
         **{
             k: os.getenv(v)

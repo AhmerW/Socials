@@ -1,15 +1,13 @@
-
-
 from typing import Any, Dict
 
 from common.data.ext.app.status import Status
 from common.data.ext.cache_client import CacheClient
 from common.data.ext.event import Event, Notice
 from common.data.ext.mq_manager import MQManager
-from common.utils import SYSTEM_UID
+from common.settings.settings import SYSTEM_SETTINGS
 from gateway import ctx
 from gateway.core.models import NoticeInsert
-from gateway.core.repo.repos import NoticeRepo
+from gateway.data.repos.repos import NoticeRepo
 
 retries = []
 
@@ -20,15 +18,14 @@ def retry(event: Event):
 
 
 async def sendNotice(notice: Notice):
-    print('sending notice to: ', notice.target)
+    print("sending notice to: ", notice.target)
 
 
 async def pushEvent(
-        event: Event,
-        producer: MQManager = None,
-        cache: CacheClient = None) -> None:
+    event: Event, producer: MQManager = None, cache: CacheClient = None
+) -> None:
 
-    if event.target == SYSTEM_UID:
+    if event.target == SYSTEM_SETTINGS.UID:
         return
 
     if producer is None:
@@ -55,4 +52,4 @@ async def pushEvent(
 
         return await sendNotice(notice)
 
-    await producer.send('ws.event.new', event.getData())
+    await producer.send("ws.event.new", event.getData())

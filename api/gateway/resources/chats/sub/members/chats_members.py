@@ -1,4 +1,3 @@
-
 from typing import Any, Dict
 from fastapi import APIRouter, Depends, Request
 from common.data.ext.mq_event import pushEvent
@@ -11,7 +10,7 @@ from gateway import ctx
 
 from gateway.core.auth.auth import getUser
 from gateway.core.models import User
-from gateway.core.repo.repos import ChatRepo
+from gateway.data.repos.repos import ChatRepo
 
 
 from gateway.resources.chats import chat_cache
@@ -26,24 +25,17 @@ router = APIRouter()
 
 
 async def updateChatMembers_fromRequest(request: Request):
-    chat_id = (await request.json()).get('chat_id')
+    chat_id = (await request.json()).get("chat_id")
     if chat_id is not None:
         await chat_cache.updateChatMembers(chat_id)
 
 
-@ router.post('/member')
-@ call_after(
-    only_on_success=True,
-    callback=updateChatMembers_fromRequest
-)
-async def chatAddUser(
-    request: Request,
-    id_: ChatID,
-    user: User = Depends(getUser)
-):
+@router.post("/member")
+@call_after(only_on_success=True, callback=updateChatMembers_fromRequest)
+async def chatAddUser(request: Request, id_: ChatID, user: User = Depends(getUser)):
     chat_id = id_.chat_id
 
-    return Success('test')
+    return Success("test")
 
 
 router.include_router(chat_invites.router)

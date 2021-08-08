@@ -1,7 +1,10 @@
+from common.data.initialize import (
+    closeConnections,
+    configureLogging,
+    initializeConnections,
+)
+from common.settings.settings import SVC_DISPATCH_SETTINGS
 
-
-from common.data.initialize import closeConnections, initializeConnections
-from common.utils import SVC_DISPATCH_IS_EXT
 
 from gateway.resources.ws import routes as ws_routes
 from gateway.resources.ott import routes as ott_routes
@@ -18,51 +21,42 @@ from gateway.ctx import app
 from gateway.core.auth import auth
 
 
-@ app.on_event('startup')
+@app.on_event("startup")
 async def startup_event():
+    logger = configureLogging()
     await initializeConnections()
 
 
-@ app.on_event('shutdown')
+@app.on_event("shutdown")
 async def shutdown_event():
     await closeConnections()
 
 
 # Test endpoint
-@ app.get('/', response_model=ResponseModel)
+@app.get("/", response_model=ResponseModel)
 async def test_endpoint():
-    return Success(
-        detail='200!'
-    )
+    return Success(detail="200!")
 
 
 # dependencies = [] arg
 
 routers = {
-    'auth': auth,
-    'ott': ott_routes,
-    'users': user_routes,
-    'chats': chat_routes,
-    'messages': msg_routes,
-    'notices': notice_routes,
-    'account': account_routes,
+    "auth": auth,
+    "ott": ott_routes,
+    "users": user_routes,
+    "chats": chat_routes,
+    "messages": msg_routes,
+    "notices": notice_routes,
+    "account": account_routes,
 }
 
 for prefix, routes in routers.items():
     assert hasattr(
-        routes, 'router'), f'Missing concrete implementation of routes in {prefix}'
+        routes, "router"
+    ), f"Missing concrete implementation of routes in {prefix}"
 
-    app.include_router(
-        getattr(
-            routes,
-            'router'
-        ),
-        prefix=f'/{prefix}'
-    )
+    app.include_router(getattr(routes, "router"), prefix=f"/{prefix}")
 
 
-if not SVC_DISPATCH_IS_EXT:
-    app.include_router(
-        ws_routes.router,
-        prefix='/ws'
-    )
+if not SVC_DISPATCH_SETTINGS.IS_EXT:
+    app.include_router(ws_routes.router, prefix="/ws")

@@ -1,32 +1,26 @@
 from typing import Dict, Any, Optional
 
-from common.utils import SYSTEM_UID
+from common.settings.settings import SYSTEM_SETTINGS
 
 
 class NewNotice:
-    __slots__ = 'title', 'body', 'save', 'include_data', 'options'
+    __slots__ = "title", "body", "save", "include_data", "options"
 
     def __init__(
-            self,
-            title: str = None,
-            body: str = None,
-            save: bool = False,
-            include_data: bool = False, **opts) -> None:
+        self,
+        title: str = None,
+        body: str = None,
+        save: bool = False,
+        include_data: bool = False,
+        **opts
+    ) -> None:
         self.title, self.body, self.save = title, body, save
         self.include_data = include_data
         self.options = opts
 
 
 class Notice:
-    __slots__ = (
-        'event',
-        'data',
-        'has_content',
-        'save',
-        'author',
-        'target',
-        'options'
-    )
+    __slots__ = ("event", "data", "has_content", "save", "author", "target", "options")
     event: str
     body: str
     author: int
@@ -46,7 +40,7 @@ class Event:
         self,
         event: str,
         data: Dict[str, Any] = dict(),
-        author: int = SYSTEM_UID,
+        author: int = SYSTEM_SETTINGS.UID,
         target: int = None,
         notice: NewNotice = None,
         **opts
@@ -55,12 +49,15 @@ class Event:
         self.author = author
         self.notice = notice
         self.target = target or author
-        self.transfer_data = {'target': self.target, **opts}
+        self.transfer_data = {"target": self.target, **opts}
 
-    def hasNotice(self) -> bool: return self.notice is not None
+    def hasNotice(self) -> bool:
+        return self.notice is not None
 
     def _getNoticeOptions(self) -> Dict[str, Any]:
-        return dict(title=self.notice.title, body=self.notice.body, **self.notice.options)
+        return dict(
+            title=self.notice.title, body=self.notice.body, **self.notice.options
+        )
 
     def getData(self) -> Dict[str, Any]:
         """
@@ -79,13 +76,9 @@ class Event:
                 will be deleted before dispatching.
 
         """
-        event = dict(
-            event=self.event,
-            data=self.data,
-            transfer_data=self.transfer_data
-        )
+        event = dict(event=self.event, data=self.data, transfer_data=self.transfer_data)
         if self.hasNotice():
-            event['notice'] = self._getNoticeOptions()
+            event["notice"] = self._getNoticeOptions()
 
         return event
 
@@ -108,7 +101,7 @@ class Event:
             author=self.author,
             target=self.target,
             data=self.data,
-            options=self._getNoticeOptions()
+            options=self._getNoticeOptions(),
         )
         # Wether to include data in the notice,
         # if true this data will also be stored in the databse

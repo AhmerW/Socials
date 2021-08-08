@@ -10,14 +10,7 @@ from gateway import ctx
 from common.data.local import db
 
 
-class BaseInterface(ABC):
-
-    @abstractmethod
-    async def delete(self):
-        pass
-
-
-class BaseRepo():
+class BaseRepo:
     def __init__(
         self,
         # Whether or not we should acquire a database connection
@@ -26,7 +19,7 @@ class BaseRepo():
         pool: pool.Pool = ctx.pool,
         # Existing connection object
         con: Connection = None,
-        auto_close_con: bool = True
+        auto_close_con: bool = True,
     ):
         self._acquire = acquire
         self._pool = pool
@@ -34,9 +27,8 @@ class BaseRepo():
         self._close_con = auto_close_con
 
     async def __aenter__(self):
-        if not hasattr(self, 'con'):
-            raise RuntimeError(
-                'super().__init__() not called for parent-class.')
+        if not hasattr(self, "con"):
+            raise RuntimeError("super().__init__() not called for parent-class.")
         if self.con is None and self._acquire:
             if self._pool is None:
                 self._pool = ctx.pool
@@ -66,12 +58,7 @@ class BaseRepo():
             return None
         if con is None:
             con = self.con
-        return await db.runQuery(
-            query=query,
-            pool=pool,
-            con=con,
-            op=op
-        )
+        return await db.runQuery(query=query, pool=pool, con=con, op=op)
 
 
 def constructOrExec(query: Query):

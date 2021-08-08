@@ -10,7 +10,10 @@
             "request": "launch",
             "program": "main.py",
             "console": "externalTerminal",
-            "cwd": "${workspaceFolder}\\api"
+            "cwd": "${workspaceFolder}\\api",
+            "args": [
+                "-o"
+            ]
         },
         {
             "name": "Docker: Python - Fastapi",

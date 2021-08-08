@@ -1,4 +1,3 @@
-
 from typing import Any, Dict
 from fastapi import APIRouter, Depends, Request
 from common.data.ext.mq_event import pushEvent
@@ -11,7 +10,7 @@ from gateway import ctx
 
 from gateway.core.auth.auth import getUser
 from gateway.core.models import User
-from gateway.core.repo.repos import ChatRepo
+from gateway.data.repos.repos import ChatRepo
 
 
 from gateway.resources.chats import chat_cache
@@ -25,35 +24,29 @@ from gateway.resources.chats.sub.messages import chats_messages
 router = APIRouter()
 
 
-@router.get('/{chat_id}')
-async def chatGet(
-        chat_id: int,
-        user: User = Depends(getUser)):
+@router.get("/{chat_id}")
+async def chatGet(chat_id: int, user: User = Depends(getUser)):
     chat: Dict[str, Any] = dict()
     async with ChatRepo() as repo:
         chat = await repo.getChatWhereID(chat_id, user.uid)
 
-    return Success('', dict(chat=chat))
+    return Success("", dict(chat=chat))
 
 
-@router.post('/')
-async def chatNew(
-    chat: ChatCreateModel,
-    user: User = Depends(getUser)
-):
+@router.post("/")
+async def chatNew(chat: ChatCreateModel, user: User = Depends(getUser)):
 
     if len(chat.members) <= 0:
-        raise Error(Errors.INVALID_DATA, '')
+        raise Error(Errors.INVALID_DATA, "")
 
     chat.name = chat.name.strip()
 
     if len(chat.name) > MAX_CHAT_NAME_LEN or len(chat.name) < MIN_CHAT_NAME_LEN:
         raise Error(
             Errors.INVALID_DATA,
-            'Chat name must be between {0} and {1} characters long'.format(
-                MIN_CHAT_NAME_LEN,
-                MAX_CHAT_NAME_LEN
-            )
+            "Chat name must be between {0} and {1} characters long".format(
+                MIN_CHAT_NAME_LEN, MAX_CHAT_NAME_LEN
+            ),
         )
 
     async with ChatRepo() as repo:

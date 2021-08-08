@@ -1,11 +1,13 @@
 class TestUser:
-    username = 'test'
+    username = "test"
+
 
 BLACKLISTED_USERNAMES = (
     TestUser.username,
-    'admin',
-    'owner'
+    "admin",
+    "owner",
 )
 
-def approveUsername(username):
-    return username in BLACKLISTED_USERNAMES
+
+def approveUsername(username) -> bool:
+    return not username in BLACKLISTED_USERNAMES

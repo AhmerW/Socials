@@ -2,7 +2,7 @@ from typing import Dict, Union
 from fastapi import WebSocket
 from aiohttp import ClientSession
 
-from common.utils import SERVER_URL
+
 from gateway import ctx
 
 
@@ -17,7 +17,7 @@ async def getClientSession() -> ClientSession:
 
 
 async def validateConnection(ws: WebSocket, ott: str) -> Union[bool, Dict]:
-    token = ws.headers.get('Authorization')
+    token = ws.headers.get("Authorization")
     if token is None:
         return False
 
@@ -26,6 +26,7 @@ async def validateConnection(ws: WebSocket, ott: str) -> Union[bool, Dict]:
         ctx.otts.pop(ott, None)
 
     return response
+
 
 """     async with session.get(
         f'{SERVER_URL}/ott/verify?ott={ott}',
@@ -40,7 +41,7 @@ async def validateConnection(ws: WebSocket, ott: str) -> Union[bool, Dict]:
 
 def decodeValue(value, default=None):
     if isinstance(value, bytes):
-        value = value.decode('utf-8')
+        value = value.decode("utf-8")
     if not isinstance(value, str):
         return value
 

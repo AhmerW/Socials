@@ -2,11 +2,12 @@ import json
 
 from enum import Enum
 from aiokafka import AIOKafkaProducer, AIOKafkaConsumer
-from common.utils import SVC_DISPATCH_AK_BROKER
+
+from common.settings.settings import SVC_DISPATCH_SETTINGS
 
 
 class MQManagerType(Enum):
-    Producer = 0,
+    Producer = (0,)
     Consumer = 1
 
 
@@ -18,21 +19,19 @@ def serializer(value):
     return json.dumps(value).encode()
 
 
-class MQManager():
-    def __init__(self, mq_type: MQManagerType, broker=SVC_DISPATCH_AK_BROKER, *args, **kwargs):
+class MQManager:
+    def __init__(
+        self,
+        mq_type: MQManagerType,
+        broker=SVC_DISPATCH_SETTINGS.AK_BROKER_URL,
+        *args,
+        **kwargs
+    ):
         self.type_ = mq_type
         if self.type_ == MQManagerType.Producer:
-            self.client = AIOKafkaProducer(
-                bootstrap_servers=broker,
-                *args,
-                **kwargs
-            )
+            self.client = AIOKafkaProducer(bootstrap_servers=broker, *args, **kwargs)
         else:
-            self.client = AIOKafkaConsumer(
-                bootstrap_servers=broker,
-                *args,
-                **kwargs
-            )
+            self.client = AIOKafkaConsumer(bootstrap_servers=broker, *args, **kwargs)
 
     async def start(self):
         await self.client.start()

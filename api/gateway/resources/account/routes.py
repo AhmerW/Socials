@@ -18,14 +18,14 @@ from common.internal.limits import INTERNAL_USERNAME_PREFIX
 from gateway import ctx
 from gateway.core.auth.auth import getUser, OptionalUser
 from gateway.core.models import TokenModel, User
-from gateway.core.repo.repos import UserRepo
-from gateway.core.repo.base import BaseRepo
+from gateway.data.repos.repos import UserRepo
+from gateway.data.repos.base import BaseRepo
 from gateway.resources.account.models import UserNewModel
 from gateway.resources.account.ext import registrator
 from gateway.resources.account.ext.tasks import (
     initVerification,
     registrationVerify,
-    registrationAllowUsername
+    registrationAllowUsername,
 )
 
 from common.response import ResponseModel, Success, Responses
@@ -40,36 +40,28 @@ router = APIRouter()
 
 # Simple static file serving
 router.mount(
-    '/web/static',
-    StaticFiles(directory=os.path.join('web', 'static')), name="static"
+    "/web/static", StaticFiles(directory=os.path.join("web", "static")), name="static"
 )
-templates = Jinja2Templates(directory=os.path.join('web', 'templates'))
+templates = Jinja2Templates(directory=os.path.join("web", "templates"))
 
 
-@router.post('/new')
+@router.post("/new")
 async def newAccount(
     user: UserNewModel,
     background_tasks: BackgroundTasks,
     base: Optional[User] = Depends(OptionalUser),
 ):
 
-    _success = Success(
-        Responses.REGISTRATION_PENDING,
-        status=202
-    )
+    _success = Success(Responses.REGISTRATION_PENDING, status=202)
 
     # <Validation>
 
     if not registrationAllowUsername(user.username.lower()):
-        raise Error(
-            Errors.USER_INVALID_USERNAME,
-            detail='Username not allowed'
-        )
+        raise Error(Errors.USER_INVALID_USERNAME, detail="Username not allowed")
 
     if user.username.startswith(INTERNAL_USERNAME_PREFIX):
         if base is None or (not base.username == InternalUser.username):
-            raise Error(Errors.USER_INVALID_USERNAME,
-                        detail='Username not allowed')
+            raise Error(Errors.USER_INVALID_USERNAME, detail="Username not allowed")
 
     if user.email is not None:
         try:
@@ -82,28 +74,28 @@ async def newAccount(
     async with BaseRepo() as repo:
         if user.email is None:
             existing = await repo.run(
-                query=UserQ.FROM_USERNAME(username=user.username),
-                op=DBOP.FetchFirst
+                query=UserQ.FROM_USERNAME(username=user.username), op=DBOP.FetchFirst
             )
         else:
             existing = await repo.run(
                 query=UserQ.FROM_USERNAME_OR_EMAIL(
-                    email=user.email,
-                    username=user.username
+                    email=user.email, username=user.username
                 ),
-                op=DBOP.FetchFirst)
+                op=DBOP.FetchFirst,
+            )
         if existing:
-            if user.username == existing.get('username'):
-                raise Error(Errors.USER_INVALID_USERNAME,
-                            detail='Username already exists')
+            if user.username == existing.get("username"):
+                raise Error(
+                    Errors.USER_INVALID_USERNAME, detail="Username already exists"
+                )
 
             if user.email is not None:
-                if user.email == existing.get('email'):
+                if user.email == existing.get("email"):
                     background_tasks.add_task(
                         ctx.email_service.sendMail,
                         body=HTML.REGISTRATION_EXISTING,
                         target=user.email,
-                        subject='Account notification'
+                        subject="Account notification",
                     )
                     return _success
 
@@ -113,25 +105,22 @@ async def newAccount(
                 display_name=user.username,
                 email=user.email,
                 password=ctx.pwd_ctx.hash(user.password),
-                verified=(user.email is None)
+                verified=(user.email is None),
             ),
-            op=DBOP.Execute
+            op=DBOP.Execute,
         )
 
         if user.email is None:
             return Success(Responses.REGISTRATION_COMPLTE, status=202)
 
-        background_tasks.add_task(
-            initVerification,
-            email=user.email
-        )
+        background_tasks.add_task(initVerification, email=user.email)
         return _success
 
 
-@router.post('/verify-attempt')
+@router.post("/verify-attempt")
 async def verifyAccount(data: TokenModel, user: User = Depends(getUser)):
     if user.verified:
-        return Success('Your account is already verified.')
+        return Success("Your account is already verified.")
     error = Error(Errors.INVALID_DATA, detail="Could not verify this account")
     if user.email is None:
         raise error
@@ -147,15 +136,15 @@ async def verifyAccount(data: TokenModel, user: User = Depends(getUser)):
     raise error
 
 
-@router.get('/verify')
+@router.get("/verify")
 async def verificationVerify(token: str):
     return HTMLResponse(HTML.REGISTRATION_PENDING)
 
 
-@router.get('/resend')
+@router.get("/resend")
 async def verificationResend(user: User = Depends(getUser)):
     if user.verified:
-        return Success('Your account is already verified.')
+        return Success("Your account is already verified.")
 
     async with UserRepo(user, acquire=False) as repo:
         await repo.resendVerification()
