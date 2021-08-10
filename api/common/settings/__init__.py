@@ -5,6 +5,7 @@ from common.settings.settings import (
     AUTH_SETTINGS,
     SERVER_SETTINGS,
     SYSTEM_SETTINGS,
+    PG_SETTINGS,
 )
 
 # Cache

@@ -4,7 +4,7 @@ from fastapi import BackgroundTasks, FastAPI
 from common.internal.limits import INTERNAL_USERNAME_PREFIX, MAX_USERNAME_LEN
 
 
-from common.data.local.html import HTML
+from gateway.data.email.html import HTML
 from gateway import ctx
 from gateway.resources.account.ext import registrator
 
@@ -26,11 +26,10 @@ async def initVerification(email: str):
     """Generates and sends verification-email to target-mail"""
     token = registrator.generateEmailToken(email)
     html = HTML.REGISTRATION_PENDING_EMAIL.format(
-        f'{ctx.ACCOUNT_VERIFY_URL}?token={token}')
+        f"{ctx.ACCOUNT_VERIFY_URL}?token={token}"
+    )
 
-    print('sending')
+    print("sending")
     return await ctx.email_service.sendMail(
-        body=html,
-        target=email,
-        subject='Account notification'
+        body=html, target=email, subject="Account notification"
     )

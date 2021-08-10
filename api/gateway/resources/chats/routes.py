@@ -1,7 +1,7 @@
 from typing import Any, Dict
 from fastapi import APIRouter, Depends, Request
-from common.data.ext.mq_event import pushEvent
-from common.data.local.db import DBOP
+from gateway.data.clients.mq.mq_event import pushEvent
+from gateway.data.db.db import DBOP
 from common.errors import Error, Errors
 from common.middleware.cache.cache_reset import call_after
 

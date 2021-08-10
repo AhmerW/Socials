@@ -26,9 +26,10 @@ from gateway.core.auth.auth_jwt import (
 from gateway.core.models import TokenModel, User
 from common.response import Success
 from common.errors import Error, Errors
-from common.data.local import db
-from common.data.local.queries.query import Query
-from common.data.local.queries.user_q import UserQ
+from gateway.data.db import db
+
+from gateway.data.db.queries import Query
+from gateway.data.db.queries.user_q import UserQ
 
 
 router = APIRouter()

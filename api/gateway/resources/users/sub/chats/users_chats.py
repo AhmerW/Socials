@@ -5,6 +5,7 @@ from gateway import ctx
 from common.response import Success
 from fastapi import APIRouter, Depends
 from common.errors import Error, Errors
+from gateway.data.services import user_service
 
 
 router = APIRouter()
@@ -14,6 +15,11 @@ router = APIRouter()
 async def usersChats(user_id: int, user: User = Depends(getUser)):
     if user_id != user.uid:
         raise Error(Errors.UNAUTHORIZED)
+
+    async with user_service.UserService() as service:
+        print(await service.getUserFromUid(user.uid))
+        print(await service.exists(10))
+        print(await service.exists(user.uid))
 
     async with ChatRepo(pool=ctx.chat_pool) as repo:
         chats = await repo.getChats(user.uid)

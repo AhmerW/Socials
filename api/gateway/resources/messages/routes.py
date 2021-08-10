@@ -1,7 +1,7 @@
 from typing import Optional
 from fastapi import APIRouter, Depends
-from common.data.ext.event import Event, NewNotice
-from common.data.ext.mq_event import pushEvent
+from gateway.data.events import Event, NewNotice
+from gateway.data.clients.mq.mq_event import pushEvent
 
 from gateway import ctx
 from gateway.core.auth.auth import getUser

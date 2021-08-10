@@ -1,6 +1,6 @@
 import json
 
-from common.data.ext.cache_client import CacheClient
+from gateway.data.clients.cache_client import CacheClient
 from gateway import ctx
 from gateway.data.repos.repos import ChatRepo
 from gateway.resources.chats import chat_cache

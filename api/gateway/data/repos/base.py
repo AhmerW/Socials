@@ -1,13 +1,86 @@
+from typing import Any
 from abc import ABC, abstractmethod
 
 
-from asyncpg import Connection, pool
 import asyncpg
-from fastapi.param_functions import Query
-from common.data.ext.config import DEFAULT_CONF
+from asyncpg import Connection, pool
+
 
 from gateway import ctx
-from common.data.local import db
+from gateway.data.db import db
+from gateway.data.db.db_connection import PGConnection, PGPool
+from gateway.data.db.pools import Pools
+
+
+class Base(ABC):
+    __slots__ = "pool", "_con"
+
+    def __init__(
+        self,
+        con: PGConnection = None,
+        pool: PGPool = None,
+    ) -> None:
+        self._con = con
+        self.pool = pool or Pools.DB_POOL
+
+    @classmethod
+    async def new(
+        cls,
+        pool=None,
+    ) -> "Base":
+        pool = pool or Pools.DB_POOL
+        con = await pool.get()
+        return cls(
+            con,
+            pool,
+        )
+
+    async def __aenter__(self):
+        if self._con is None:
+            self._con = await self.pool.get()
+
+        return self
+
+    async def __aexit__(self, *_, **__) -> None:
+        await self.close()
+
+    async def close(self) -> None:
+        if self._con is not None:
+            if not self._con.closed():
+                await self._con.close()
+
+    @abstractmethod
+    async def create(self) -> Any:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def get(self) -> Any:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def update(self) -> Any:
+        raise NotImplementedError
+
+    @abstractmethod
+    async def delete(self) -> Any:
+        raise NotImplementedError
+
+
+class BaseService(ABC):
+    __slots__ = ("_repo",)
+
+    async def __aenter__(
+        self,
+        repo: Base,
+        pool=None,
+    ) -> "BaseService":
+        self._repo = await repo.new(
+            pool=pool,
+        )
+        return self
+
+    async def __aexit__(self, *_, **__) -> None:
+        await self._repo.close()
 
 
 class BaseRepo:
@@ -49,7 +122,7 @@ class BaseRepo:
 
     async def run(
         self,
-        query: Query = None,
+        query: str = None,
         pool: pool.Pool = None,
         con: Connection = None,
         op: db.DBOP = db.DBOP.Fetch,
@@ -59,7 +132,3 @@ class BaseRepo:
         if con is None:
             con = self.con
         return await db.runQuery(query=query, pool=pool, con=con, op=op)
-
-
-def constructOrExec(query: Query):
-    pass

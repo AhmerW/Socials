@@ -10,7 +10,7 @@ from fastapi.templating import Jinja2Templates
 
 from email_validator import validate_email as validateEmail
 from email_validator import EmailNotValidError
-from common.data.local.html import HTML, TEMPLATE_DIR
+from gateway.data.email.html import HTML, TEMPLATE_DIR
 from common.internal.access import InternalUser
 from common.internal.limits import INTERNAL_USERNAME_PREFIX
 
@@ -30,9 +30,9 @@ from gateway.resources.account.ext.tasks import (
 
 from common.response import ResponseModel, Success, Responses
 from common.errors import Error, Errors
-from common.data.local.db import DBOP
-from common.data.local.queries.account_q import AccountQ
-from common.data.local.queries.user_q import UserQ
+from gateway.data.db.db import DBOP
+from gateway.data.db.queries.account_q import AccountQ
+from gateway.data.db.queries.user_q import UserQ
 
 
 router = APIRouter()

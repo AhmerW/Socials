@@ -2,19 +2,22 @@ import json
 from typing import Any, Dict, List
 import asyncpg
 from asyncpg.connection import Connection
-from common.data.ext.event import Notice
-from common.data.local.queries.query import Query
+
+from gateway.data.events import Notice
+from gateway.data.db.queries import Query
+
+
 from gateway import ctx
 
 from gateway.data.repos.base import BaseRepo
 from gateway.core.models import User
 
 
-from common.data.local import db
-from common.data.local.queries.chat_q import ChatQ
-from common.data.local.queries.notice_q import NoticeQ
-from common.data.local.queries.message_q import MessageQ
-from common.data.local.queries.user_q import UserQ
+from gateway.data.db import db
+from gateway.data.db.queries.chat_q import ChatQ
+from gateway.data.db.queries.notice_q import NoticeQ
+from gateway.data.db.queries.message_q import MessageQ
+from gateway.data.db.queries.user_q import UserQ
 
 from gateway.resources.account.ext.tasks import initVerification
 from gateway.resources.chats.models import Chat, ChatCreateModel

@@ -5,7 +5,7 @@ from fastapi import WebSocket, status, WebSocketDisconnect, APIRouter
 from websockets.exceptions import WebSocketException
 
 
-from common.data.ext.mq_manager import MQManager, MQManagerType, deserializer
+from gateway.data.clients.mq.mq_client import MQManager, MQManagerType, deserializer
 from common.settings.settings import SVC_DISPATCH_SETTINGS
 from common.settings.utils import constructUrl
 

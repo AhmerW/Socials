@@ -1,4 +1,4 @@
-from common.data.initialize import (
+from gateway.data.initialize import (
     closeConnections,
     configureLogging,
     initializeConnections,
@@ -60,3 +60,6 @@ for prefix, routes in routers.items():
 
 if not SVC_DISPATCH_SETTINGS.IS_EXT:
     app.include_router(ws_routes.router, prefix="/ws")
+
+
+# TODO implement permission scopes / intents

@@ -12,7 +12,10 @@ IS_DEV = True
 DEFAULT_ENV_FILE = ".env"
 DEFAULT_ENV_ENCODING = "utf-8"
 
-load_dotenv(DEFAULT_ENV_FILE, verbose=True)
+load_dotenv(
+    DEFAULT_ENV_FILE,
+    verbose=True,
+)
 
 
 class EnvConfig:
@@ -73,6 +76,17 @@ class ServerSettings(BaseSettings):
 class LoggingSettings(BaseSettings):
     LOGGER_NAME = "gunicorn.error"
     DEV_LOGGER_NAME = "uvicorn.access"
+
+
+class PGSettings(BaseSettings):
+    DSN: str
+    CHAT_DSN: str
+
+    DSN_SCHEMA = "schema"
+    CHAT_DSN_SCHEMA = "chat"
+
+    class Config(EnvConfig):
+        env_prefix = "PG_"
 
 
 # Services
@@ -186,4 +200,6 @@ SYSTEM_SETTINGS: Final[SystemSettings] = SystemSettings()
 USER_CACHE_SETTINGS: Final[UserCache] = UserCache()
 CACHE_SERVER_SETTINGS: Final[CacheServer] = CacheServer()
 
-SVC_DISPATCH_SETTINGS = ServiceDispatchSettings()
+SVC_DISPATCH_SETTINGS: Final[ServiceDispatchSettings] = ServiceDispatchSettings()
+
+PG_SETTINGS: Final[PGSettings] = PGSettings()
