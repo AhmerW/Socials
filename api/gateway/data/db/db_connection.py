@@ -61,6 +61,7 @@ class PGConnection(BaseConnection):
 
     async def fetchFirst(self, query: Query, **values) -> dict:
         records = await self.fetch(query, **values)
+
         return first(
             records,
             list(),
@@ -95,7 +96,7 @@ class PGPool(BasePool):
             await con.execute("SELECT 1")
 
     async def release_connection(self, con: PGConnection) -> None:
-        return await con.connection.close()
+        await self._pool.release(con.connection)
 
     @asynccontextmanager
     async def acquire(self) -> AsyncIterator[PGConnection]:

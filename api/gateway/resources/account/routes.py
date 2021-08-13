@@ -34,6 +34,8 @@ from gateway.data.db.db import DBOP
 from gateway.data.db.queries.account_q import AccountQ
 from gateway.data.db.queries.user_q import UserQ
 
+from gateway.data.services.user_service import UserService
+
 
 router = APIRouter()
 
@@ -45,7 +47,7 @@ router.mount(
 templates = Jinja2Templates(directory=os.path.join("web", "templates"))
 
 
-@router.post("/new")
+@router.post("/")
 async def newAccount(
     user: UserNewModel,
     background_tasks: BackgroundTasks,
@@ -53,6 +55,9 @@ async def newAccount(
 ):
 
     _success = Success(Responses.REGISTRATION_PENDING, status=202)
+
+    async with UserService() as service:
+        pass
 
     # <Validation>
 

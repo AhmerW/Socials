@@ -1,9 +1,10 @@
-from typing import Any
+from typing import Any, Optional
 from abc import ABC, abstractmethod
 
 
 import asyncpg
 from asyncpg import Connection, pool
+from email_validator import EmailNotValidError, validate_email as _validateEmail
 
 
 from gateway import ctx
@@ -46,8 +47,9 @@ class Base(ABC):
 
     async def close(self) -> None:
         if self._con is not None:
-            if not self._con.closed():
-                await self._con.close()
+            await self.pool.release_connection(self._con)
+        # if not self._con.closed():
+        # await self._con.close()
 
     @abstractmethod
     async def create(self) -> Any:
@@ -81,6 +83,17 @@ class BaseService(ABC):
 
     async def __aexit__(self, *_, **__) -> None:
         await self._repo.close()
+
+
+class BaseValidator:
+    def validEmail(email) -> Optional[str]:
+        try:
+            _validateEmail(
+                email,
+                check_deliverability=False,
+            )
+        except EmailNotValidError as msg:
+            return str(msg)
 
 
 class BaseRepo:

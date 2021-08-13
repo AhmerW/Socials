@@ -5,7 +5,7 @@ class UserQ(metaclass=QueryCreator):
     FROM_USERNAME = "SELECT * FROM public.users WHERE username={username}"
 
     FROM_EMAIL = "SELECT email FROM public.users WHERE email={email}"
-    FROM_USERNAME_OR_EMAIL = "SELECT email, username FROM public.users WHERE email = {email} OR username = {username}"
+    FROM_USERNAME_OR_EMAIL = "SELECT email, username, uid FROM public.users WHERE email = {email} OR username = {username}"
     EXISTS = "SELECT uid from public.users where uid={uid}"
 
     VERIFY = "UPDATE users SET verified=TRUE where uid={uid}"

@@ -40,9 +40,10 @@ class MQManager:
         await self.client.stop()
 
     async def send(self, *args, **kwargs):
-        assert self.type_ == MQManagerType.Producer
-        return await self.client.send_and_wait(*args, **kwargs)
+        if self.type_ == MQManagerType.Producer:
+            return await self.client.send_and_wait(*args, **kwargs)
 
     def receive(self):
-        assert self.type_ == MQManagerType.Consumer
-        return self.client
+        if self.type_ == MQManagerType.Consumer:
+            # will yield back messages (async ctx manager)
+            return self.client

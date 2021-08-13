@@ -1,4 +1,5 @@
-from typing import Any, Union
+from typing import Any, Optional, Union
+from gateway.core.models import User
 
 from gateway.data.repos.base import Base
 
@@ -30,7 +31,7 @@ class UserRepo(Base):
     async def get(
         self,
         value: Union[int, str],
-    ) -> Any:
+    ) -> Optional[User]:
 
         if isinstance(value, int):
             return await self._con.fetchFirst(
@@ -38,10 +39,25 @@ class UserRepo(Base):
                 uid=value,
             )
 
-        return await self._con.fetchFirst(
+        user = await self._con.fetchFirst(
             UserQ.PROFILE_FROM_USERNAME,
             username=value,
         )
+        if user:
+            return User(**user)
+
+    async def getFromUsernameOrEmail(
+        self,
+        username: str,
+        email: str,
+    ) -> Optional[User]:
+        user = await self._con.fetchFirst(
+            UserQ.FROM_USERNAME_OR_EMAIL,
+            username=username,
+            email=email,
+        )
+        if user:
+            return User(**user)
 
     async def delete(self) -> Any:
         return await super().delete()

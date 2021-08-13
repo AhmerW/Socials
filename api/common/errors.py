@@ -7,6 +7,9 @@ from gateway.ctx import app
 
 
 class Errors(Enum):
+    class Ott(Enum):
+        NOT_FOUND = auto()
+
     INTERNAL = auto()
     UNAUTHORIZED = auto()
     LIMIT_EXCEEDED = auto()
@@ -25,24 +28,32 @@ class Errors(Enum):
     USER_INVALID_USERNAME = auto()
 
 
-class OTTErrors(Enum):
-    NOT_FOUND = auto()
-
-
 class ErrorStatus(Enum):
     CHANNEL = 402
     INVALID = 202
 
 
 class Error(Exception):
-    def __init__(self, error: Errors, detail="", status=400, headers={}):
+    __slots__ = "error", "detail", "status", "headers"
+
+    def __init__(
+        self,
+        error: Errors,
+        detail="",
+        status=400,
+        headers={},
+    ):
         self.error: Errors = error
         self.headers = headers
         self.status = status
         self.detail = detail
 
     def json(self):
-        return {"msg": str(self.error), "code": self.error.value, "type": "exception"}
+        return {
+            "msg": str(self.error),
+            "code": self.error.value,
+            "type": "exception",
+        }
 
 
 @app.exception_handler(Error)

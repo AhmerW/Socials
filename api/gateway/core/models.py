@@ -14,8 +14,8 @@ class NoticeInsert(BaseModel):
     author: int
     target: int
     event: str
-    title: Optional[str] = None,
-    body: Optional[str] = None,
+    title: Optional[str] = (None,)
+    body: Optional[str] = (None,)
     data: Optional[Dict[str, Any]] = None
 
 
