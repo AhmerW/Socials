@@ -1,7 +1,7 @@
 from gateway.data.initialize import (
     closeConnections,
-    configureLogging,
-    initializeConnections,
+
+
 )
 from common.settings.settings import SVC_DISPATCH_SETTINGS
 
@@ -21,10 +21,7 @@ from gateway.ctx import app
 from gateway.core.auth import auth
 
 
-@app.on_event("startup")
-async def startup_event():
-    logger = configureLogging()
-    await initializeConnections()
+
 
 
 @app.on_event("shutdown")

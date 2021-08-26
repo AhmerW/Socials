@@ -3,7 +3,7 @@ from common.middleware.cache.cache_backend import RedisCachingBackend
 
 
 class CacheClient:
-    def __init__(self, con: aioredis.ConnectionsPool) -> None:
+    def __init__(self, con: aioredis.ConnectionPool) -> None:
         self._con: aioredis.Redis = con
 
     @property

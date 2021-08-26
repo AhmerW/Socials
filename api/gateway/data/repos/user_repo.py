@@ -15,13 +15,15 @@ class UserRepo(Base):
     async def create(
         self,
         username: str,
+        display_name: str,
         password: str,
         email: str,
-        verified: bool = False,
+        verified: bool,
     ) -> str:
         return await self._con.execute(
             AccountQ.NEW.format(
                 username=username,
+                display_name=display_name,
                 password=password,
                 email=email,
                 verified=verified,

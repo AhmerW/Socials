@@ -41,6 +41,11 @@ async def usersPosts(
     result: UserRegistrationResults = None
     async with UserService() as service:
         result = await service.validateNewUser(user)
+        await service.createNewUser(
+            user.username,
+            user.password,
+            user.email,
+        )
 
     return Success("Registered")
 

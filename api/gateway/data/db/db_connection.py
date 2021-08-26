@@ -1,5 +1,6 @@
 from typing import Iterable, List, Optional, AsyncIterator, Union
 from contextlib import asynccontextmanager
+from asyncpg import connection
 
 from more_itertools import first
 import asyncpg
@@ -43,13 +44,21 @@ class PGConnection(BaseConnection):
     async def close(self) -> None:
         await self._con.close()
 
-    async def execute(self, query: Union[Query, str], **values) -> str:
+    async def execute(
+        self,
+        query: Union[Query, str],
+        **values,
+    ) -> str:
         query = self._getQuery(query)
         return await self._con.execute(
-            *query.format(**values),
+            *(query.format(**values)),
         )
 
-    async def fetch(self, query: Union[Query, str], **values) -> List[dict]:
+    async def fetch(
+        self,
+        query: Union[Query, str],
+        **values,
+    ) -> List[dict]:
         query = self._getQuery(query)
         res: List[asyncpg.Record] = await self._con.fetch(
             *query.format(**values),
@@ -80,6 +89,7 @@ class PGPool(BasePool):
     ) -> "PGPool":
         pool = await asyncpg.create_pool(
             dsn,
+            database="socials",
             server_settings={
                 "search_path": schema,
             },
@@ -103,7 +113,6 @@ class PGPool(BasePool):
         async with self._pool.acquire() as con:
             pgc = PGConnection(con)
             yield pgc
-
             await self.release_connection(pgc)
 
     async def get(self):

@@ -47,58 +47,7 @@ def configureLogging() -> logging.Logger:
     return loggerInit(logger)
 
 
-async def initializeConnections():
-    """
-    Decleration of global immutable instances and connection (pools).
-    Stored in the global context (ctx) module.
-    """
 
-    async def _create_pool(schema: str):
-        return await createPool(
-            {"server_settings": {"search_path": schema}},
-            # (Environment variables)
-            host="SERVER_DB_HOST",
-            port="SERVER_DB_PORT",
-            user="SERVER_DB_USER",
-            password="SERVER_DB_PASSWD",
-            database="SERVER_DB_DB",
-        )
-
-    AK_BROKER_URL = constructUrl(
-        SVC_DISPATCH_SETTINGS.AK_BROKER_IP,
-        SVC_DISPATCH_SETTINGS.AK_BROKER_PORT,
-        "",
-    )
-
-    ctx.pool = await _create_pool("public")
-    ctx.chat_pool = await _create_pool("chat")
-
-    ctx.producer = MQManager(
-        MQManagerType.Producer,
-        broker=AK_BROKER_URL,
-        value_serializer=serializer,
-    )
-    ctx.cache_client = await CacheClient.create(
-        (str(CACHE_SERVER_SETTINGS.IP), CACHE_SERVER_SETTINGS.PORT),
-        password=CACHE_SERVER_SETTINGS.AUTH,
-        db=CACHE_SERVER_SETTINGS.DB,
-    )
-
-    ctx.user_cache = await CacheClient.create(
-        (str(USER_CACHE_SETTINGS.IP), USER_CACHE_SETTINGS.PORT),
-        password=USER_CACHE_SETTINGS.AUTH,
-        db=USER_CACHE_SETTINGS.DB,
-    )
-
-    assert not any(
-        [x is None for x in (ctx.pool, ctx.chat_pool, ctx.producer, ctx.user_cache)]
-    )
-
-    try:
-        await ctx.producer.start()
-
-    except Exception as e:
-        raise e("Make sure the apache kafka broker is active!")
 
 
 async def closeConnections():

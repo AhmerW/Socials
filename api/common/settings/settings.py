@@ -43,14 +43,12 @@ class SystemSettings(BaseSettings):
 class DevSettings(BaseSettings):
     IS_DEV: bool = IS_DEV
     PROTO: str = "http"
-    IP: ipaddress.IPv4Address
-    PORT: int
+    IP: ipaddress.IPv4Address = ipaddress.IPv4Address('0.0.0.0',)
+    PORT: int = 8000
 
     # dynamically defied based on proto,ip,port
     URL: Optional[HttpOnly]
 
-    class Config:
-        env_prefix: str = "DEV_"
 
     @root_validator
     def _set_fields(
@@ -144,10 +142,10 @@ class AuthSettings(BaseSettings):
 class TokenSettings(BaseSettings):
     TYPE: str = "bearer"
     ENCODING: str = "utf-8"
-    ALGO: str
+    ALGO: str = "sha256"
 
-    EXPIRE: int
-    REFRESH_EXPIRE: int
+    EXPIRE: int = 168
+    REFRESH_EXPIRE: int = 2184
 
     class Config(EnvConfig):
         env_prefix = "TOKEN_"
@@ -203,3 +201,4 @@ CACHE_SERVER_SETTINGS: Final[CacheServer] = CacheServer()
 SVC_DISPATCH_SETTINGS: Final[ServiceDispatchSettings] = ServiceDispatchSettings()
 
 PG_SETTINGS: Final[PGSettings] = PGSettings()
+

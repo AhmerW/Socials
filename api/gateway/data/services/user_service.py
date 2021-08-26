@@ -65,8 +65,18 @@ class UserService(BaseService):
 
     async def createNewUser(
         self,
+        username: str,
+        password: str,
+        email: str,
+        verified: bool = False,
     ):
-        await self._repo.create()
+        return await self._repo.create(
+            username=username,
+            display_name=username,
+            password=password,
+            email=email,
+            verified=verified,
+        )
 
     async def validNewUser(
         self,
@@ -97,7 +107,10 @@ class UserService(BaseService):
             )
         ) is None
 
-    async def validateNewUser(self, user: UserNewModel):
+    async def validateNewUser(
+        self,
+        user: UserNewModel,
+    ) -> UserRegistrationResults:
         """Validates a new registration attempt with errors on fail"""
         username_err = UserService.validator.validateUsername(user.username)
         if isinstance(username_err, str):
