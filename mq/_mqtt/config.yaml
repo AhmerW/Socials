@@ -1,9 +1,0 @@
-listeners:
-    default:
-        max-connections: 50000
-        type: tcp
-    tcp-1:
-        bind: 127.0.0.1:3881
-
-
-timeout-disconnect-delay: 2

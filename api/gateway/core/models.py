@@ -1,5 +1,15 @@
 from typing import Any, Dict, Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, create_model
+
+
+# ValueModel.create(attr=(type, default: type / ...))
+# (if ellipsis then attr is required)
+
+
+class ValueModel(BaseModel):
+    @classmethod
+    def create(cls, **fields) -> "ValueModel":
+        return create_model("ValueModel", __base__=cls, **fields)
 
 
 class User(BaseModel):

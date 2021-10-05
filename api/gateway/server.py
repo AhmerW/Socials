@@ -1,7 +1,5 @@
 from gateway.data.initialize import (
     closeConnections,
-
-
 )
 from common.settings.settings import SVC_DISPATCH_SETTINGS
 
@@ -19,14 +17,6 @@ from common.response import ResponseModel, Success
 from gateway import ctx
 from gateway.ctx import app
 from gateway.core.auth import auth
-
-
-
-
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    await closeConnections()
 
 
 # Test endpoint
@@ -48,9 +38,6 @@ routers = {
 }
 
 for prefix, routes in routers.items():
-    assert hasattr(
-        routes, "router"
-    ), f"Missing concrete implementation of routes in {prefix}"
 
     app.include_router(getattr(routes, "router"), prefix=f"/{prefix}")
 

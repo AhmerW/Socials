@@ -78,7 +78,7 @@ class UserService(BaseService):
             verified=verified,
         )
 
-    async def validNewUser(
+    async def isNewUserValid(
         self,
         user: UserNewModel,
     ) -> bool:

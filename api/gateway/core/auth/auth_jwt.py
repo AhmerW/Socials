@@ -13,12 +13,8 @@ ENCODED_SECRET_KEY = SERVER_SETTINGS.SKEY.encode(SYSTEM_SETTINGS.ENCODING)
 
 
 class TokenType(Enum):
-    RefreshToken = 0
-    AccessToken = 1
-
-
-def tokenTypeStr(token_type: TokenType) -> str:
-    return "access" if token_type == TokenType.AccessToken else "refresh"
+    RefreshToken = "refresh"
+    AccessToken = "access"
 
 
 def decodeToken(
@@ -64,7 +60,7 @@ def createNewToken(
         "iat": _time,
         "nbf": _time,
         "jti": str(uuid.uuid4()),
-        "type": tokenTypeStr(token_type),
+        "type": token_type.value,
     }
     if _token_is_access:
         claims["fresh"] = False
@@ -87,7 +83,7 @@ def verifyRefreshToken(token: str, unique: str) -> Union[None, Tuple[bool, str]]
     if payload is None or payload.get("unique") is None:
         return False, "Invalid data"
 
-    if payload.get("type") != tokenTypeStr(TokenType.RefreshToken):
+    if payload.get("type") != TokenType.RefreshToken.value:
         return False, "Invalid token type"
 
     if not hmac.compare_digest(

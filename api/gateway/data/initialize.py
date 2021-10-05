@@ -47,9 +47,7 @@ def configureLogging() -> logging.Logger:
     return loggerInit(logger)
 
 
-
-
-
+@ctx.app.on_event("shutdown")
 async def closeConnections():
     if isinstance(ctx.producer, MQManager):
         await ctx.producer.stop()
